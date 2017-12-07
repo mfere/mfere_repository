@@ -10,6 +10,7 @@ import com.analyzer.model.FxIndicator;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.RewardFunction;
 import com.analyzer.reader.ReadRequestForm;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,10 +23,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.analyzer.TestConstants.NETWORK_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -50,8 +56,11 @@ public class ApplicationTest {
 		@Autowired
 		private TestRestTemplate template;
 
+    	private PropertiesConfiguration properties;
+
 		@Before
 		public void setUp() throws Exception {
+			properties = new PropertiesConfiguration("application.properties");
 			this.baseUrl = "http://localhost:" + port;
 			this.readURI = new URI(baseUrl + "/read");
 			this.enrichURI = new URI(baseUrl + "/enrich");
@@ -183,6 +192,8 @@ public class ApplicationTest {
 		form.setTestToDate("2017-11-01 00:00:00");
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
+		form.setNetworkConfiguration(readNetworkConfiguration("baseNetwork"));
+		form.setLearningRate(0.1);
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.STANDARD_MACD.getName());
 		form.setIndicators(indicators);
@@ -192,6 +203,14 @@ public class ApplicationTest {
 				learnURI, form, String.class);
 		assertEquals(response.getStatusCode(), HttpStatus.OK);
 		assertEquals(response.getBody(),"ok");
+	}
+
+	private String readNetworkConfiguration(String networkName)
+			throws IOException
+	{
+		byte[] encoded = Files.readAllBytes(
+		        Paths.get(properties.getProperty(NETWORK_PATH)+networkName+".json"));
+		return new String(encoded, Charset.forName("UTF-8"));
 	}
 
 }

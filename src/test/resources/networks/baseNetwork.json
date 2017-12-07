@@ -1,0 +1,135 @@
+{
+  "backprop" : true,
+  "backpropType" : "Standard",
+  "cacheMode" : "NONE",
+  "confs" : [ {
+    "cacheMode" : "NONE",
+    "iterationCount" : 0,
+    "l1ByParam" : { },
+    "l2ByParam" : { },
+    "layer" : {
+      "dense" : {
+        "activationFn" : {
+          "ReLU" : { }
+        },
+        "adamMeanDecay" : "NaN",
+        "adamVarDecay" : "NaN",
+        "biasInit" : 0.0,
+        "biasLearningRate" : 0.1,
+        "dist" : null,
+        "dropOut" : 0.0,
+        "epsilon" : "NaN",
+        "gradientNormalization" : "None",
+        "gradientNormalizationThreshold" : 1.0,
+        "iupdater" : {
+          "@class" : "org.nd4j.linalg.learning.config.Nesterovs",
+          "learningRate" : 0.1,
+          "momentum" : 0.9
+        },
+        "l1" : 0.0,
+        "l1Bias" : 0.0,
+        "l2" : 0.0,
+        "l2Bias" : 0.0,
+        "layerName" : "layer0",
+        "learningRate" : 0.1,
+        "learningRateSchedule" : null,
+        "momentum" : 0.9,
+        "momentumSchedule" : { },
+        "nin" : 2,
+        "nout" : 20,
+        "rho" : "NaN",
+        "rmsDecay" : "NaN",
+        "updater" : "NESTEROVS",
+        "weightInit" : "XAVIER"
+      }
+    },
+    "leakyreluAlpha" : 0.0,
+    "learningRateByParam" : { },
+    "learningRatePolicy" : "None",
+    "lrPolicyDecayRate" : "NaN",
+    "lrPolicyPower" : "NaN",
+    "lrPolicySteps" : "NaN",
+    "maxNumLineSearchIterations" : 5,
+    "miniBatch" : true,
+    "minimize" : true,
+    "numIterations" : 1,
+    "optimizationAlgo" : "STOCHASTIC_GRADIENT_DESCENT",
+    "pretrain" : false,
+    "seed" : 123,
+    "stepFunction" : null,
+    "useDropConnect" : false,
+    "useRegularization" : false,
+    "variables" : [ ]
+  }, {
+    "cacheMode" : "NONE",
+    "iterationCount" : 0,
+    "l1ByParam" : { },
+    "l2ByParam" : { },
+    "layer" : {
+      "output" : {
+        "activationFn" : {
+          "Softmax" : { }
+        },
+        "adamMeanDecay" : "NaN",
+        "adamVarDecay" : "NaN",
+        "biasInit" : 0.0,
+        "biasLearningRate" : 0.1,
+        "dist" : null,
+        "dropOut" : 0.0,
+        "epsilon" : "NaN",
+        "gradientNormalization" : "None",
+        "gradientNormalizationThreshold" : 1.0,
+        "iupdater" : {
+          "@class" : "org.nd4j.linalg.learning.config.Nesterovs",
+          "learningRate" : 0.1,
+          "momentum" : 0.9
+        },
+        "l1" : 0.0,
+        "l1Bias" : 0.0,
+        "l2" : 0.0,
+        "l2Bias" : 0.0,
+        "layerName" : "layer1",
+        "learningRate" : 0.1,
+        "learningRateSchedule" : null,
+        "lossFn" : {
+          "NegativeLogLikelihood" : {
+            "softmaxClipEps" : 1.0E-10
+          }
+        },
+        "lossFunction" : "NEGATIVELOGLIKELIHOOD",
+        "momentum" : 0.9,
+        "momentumSchedule" : { },
+        "nin" : 20,
+        "nout" : 2,
+        "rho" : "NaN",
+        "rmsDecay" : "NaN",
+        "updater" : "NESTEROVS",
+        "weightInit" : "XAVIER"
+      }
+    },
+    "leakyreluAlpha" : 0.0,
+    "learningRateByParam" : { },
+    "learningRatePolicy" : "None",
+    "lrPolicyDecayRate" : "NaN",
+    "lrPolicyPower" : "NaN",
+    "lrPolicySteps" : "NaN",
+    "maxNumLineSearchIterations" : 5,
+    "miniBatch" : true,
+    "minimize" : true,
+    "numIterations" : 1,
+    "optimizationAlgo" : "STOCHASTIC_GRADIENT_DESCENT",
+    "pretrain" : false,
+    "seed" : 123,
+    "stepFunction" : null,
+    "useDropConnect" : false,
+    "useRegularization" : false,
+    "variables" : [ ]
+  } ],
+  "inferenceWorkspaceMode" : "SEPARATE",
+  "inputPreProcessors" : { },
+  "iterationCount" : 0,
+  "pretrain" : false,
+  "tbpttBackLength" : 20,
+  "tbpttFwdLength" : 20,
+  "trainingWorkspaceMode" : "NONE"
+}

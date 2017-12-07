@@ -27,5 +27,7 @@ public class LearnerRequestForm {
     private String granularity;// = GranularityValue.D.getName();
     private List<String> indicators;
     private String rewardFunction;
+    private String networkConfiguration;
+    private Double learningRate;
 
  }
