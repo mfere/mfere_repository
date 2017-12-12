@@ -1,4 +1,4 @@
-package com.analyzer.enricher;
+package com.analyzer.enricher.rewardfunction;
 
 import com.analyzer.constants.RewardFunctionValue;
 import com.analyzer.model.repository.RawCandlestickRepository;
@@ -6,7 +6,7 @@ import com.analyzer.model.repository.RawCandlestickRepository;
 import static com.analyzer.constants.RewardFunctionValue.*;
 
 public class RewardFunctionFactory {
-    static RewardFunctionBuilder getRewardFunction(
+    public static RewardFunctionBuilder getRewardFunction(
             RewardFunctionValue value,
             RawCandlestickRepository repository) {
         switch (value) {

@@ -1,4 +1,4 @@
-package com.analyzer.enricher;
+package com.analyzer.enricher.rewardfunction;
 
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;

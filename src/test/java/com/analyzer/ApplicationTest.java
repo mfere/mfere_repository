@@ -80,8 +80,8 @@ public class ApplicationTest {
 
 		ResponseEntity<String> response = template.postForEntity(
 				readURI, form, String.class);
-		assertEquals(response.getStatusCode(), HttpStatus.OK);
-		assertEquals(response.getBody(),"ok");
+		assertEquals( HttpStatus.OK, response.getStatusCode());
+		assertEquals("ok",response.getBody());
 	}
 
 		@Test
@@ -115,7 +115,7 @@ public class ApplicationTest {
 							+ "/"+ instrument
 					,
 					RawCandlestick.class);
-			assertEquals(response.getStatusCode(), HttpStatus.OK);;
+			assertEquals(response.getStatusCode(), HttpStatus.OK);
 			assertNotNull(response.getBody());
 			assertEquals(response.getBody().getRawCandlestickKey().getGranularity(), granularity);
 			assertEquals(response.getBody().getRawCandlestickKey().getDateTime().toString(), datetime);
@@ -126,15 +126,15 @@ public class ApplicationTest {
 	public void testEnrich() throws Exception {
 		EnrichRequestForm form = new EnrichRequestForm();
 		form.setFromDate("2010-01-04 00:00:00");
-		form.setToDate("2017-11-015 00:00:00");
+		form.setToDate("2017-11-15 00:00:00");
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.STANDARD_MACD.getName());
 		List<String> rewardFunctions = new ArrayList<>();
 		rewardFunctions.add(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
-        rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
-		rewardFunctions.add(RewardFunctionValue.S_TAKE_PROFIT_001_24.getName());
+        //rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
+		//rewardFunctions.add(RewardFunctionValue.S_TAKE_PROFIT_001_24.getName());
 		form.setIndicators(indicators);
 		form.setRewardFunctions(rewardFunctions);
 
@@ -145,15 +145,15 @@ public class ApplicationTest {
 
 		ResponseEntity<RawCandlestick> rawCandlestickResponse = template.getForEntity(
 				baseUrl + "/rawcandlestick/"
-						+ "/"+ "2017-08-01T00:00:00Z"
+						+ "/"+ "2017-08-02T00:00:00Z"
 						+ "/"+ form.getGranularity()
 						+ "/"+ form.getInstrument()
 				,
 				RawCandlestick.class);
-		assertEquals(rawCandlestickResponse.getStatusCode(), HttpStatus.OK);;
+		assertEquals(HttpStatus.OK, rawCandlestickResponse.getStatusCode());
 		assertNotNull(rawCandlestickResponse.getBody());
 		assertEquals(rawCandlestickResponse.getBody().getRawCandlestickKey().getGranularity(), form.getGranularity());
-		assertEquals(rawCandlestickResponse.getBody().getRawCandlestickKey().getDateTime().toString(), "2017-08-01T00:00:00Z");
+		assertEquals(rawCandlestickResponse.getBody().getRawCandlestickKey().getDateTime().toString(), "2017-08-02T00:00:00Z");
 		assertNotNull(rawCandlestickResponse.getBody().getFxIndicators());
 		FxIndicator[] fxIndicators = rawCandlestickResponse.getBody().getFxIndicators();
 		assertTrue("rawCandlestickResponse should have indicators after add",
@@ -180,7 +180,6 @@ public class ApplicationTest {
 			}
 		}
 		assertTrue("rawCandlestickResponse should have new added rewardFunction", hasAddedRewardFunction);
-
 	}
 
 	@Test
@@ -201,8 +200,8 @@ public class ApplicationTest {
 
 		ResponseEntity<String> response = template.postForEntity(
 				learnURI, form, String.class);
-		assertEquals(response.getStatusCode(), HttpStatus.OK);
-		assertEquals(response.getBody(),"ok");
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals("ok",response.getBody());
 	}
 
 	private String readNetworkConfiguration(String networkName)

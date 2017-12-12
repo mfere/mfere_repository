@@ -4,6 +4,8 @@ import com.analyzer.constants.GranularityValue;
 import com.analyzer.constants.IndicatorValue;
 import com.analyzer.constants.InstrumentValue;
 import com.analyzer.constants.RewardFunctionValue;
+import com.analyzer.enricher.rewardfunction.RewardFunctionBuilder;
+import com.analyzer.enricher.rewardfunction.RewardFunctionFactory;
 import com.analyzer.model.FxIndicator;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
@@ -91,20 +93,21 @@ public class EnricherController {
                             new FxIndicator(indicatorName, indicators.get(indicatorName).getValue(i).toDouble())
                     );
                 }
-                for (String rewardFunctionName : enrichRequestForm.getRewardFunctions()) {
-                    RewardFunctionBuilder rewardFunctionBuilder = RewardFunctionFactory.getRewardFunction(
-                            RewardFunctionValue.getRewardFunctionValue(rewardFunctionName),
-                            rawCandlestickRepository);
-                    if (rewardFunctionBuilder == null) {
-                        System.out.println("No reward builder found");
-                        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                    }
-                    rawCandlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(rawCandlestick));
-                }
-
                 rawCandlestickRepository.save(rawCandlestick);
             }
 
+            for (String rewardFunctionName : enrichRequestForm.getRewardFunctions()) {
+                RewardFunctionBuilder rewardFunctionBuilder = RewardFunctionFactory.getRewardFunction(
+                        RewardFunctionValue.getRewardFunctionValue(rewardFunctionName),
+                        rawCandlestickRepository);
+                if (rewardFunctionBuilder == null) {
+                    System.out.println("No reward builder found");
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                }
+                for (RawCandlestick candlestick : rawCandlestickList) {
+                    rawCandlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(candlestick));
+                }
+            }
 
             return new ResponseEntity<>("ok", HttpStatus.OK);
         } catch (Throwable t) {
