@@ -46,9 +46,9 @@ public abstract class FixedTakeProfit implements RewardFunctionBuilder {
         // next candle close decreased compared to previous, but buy value is still below max
         Label selectedLabel;
         if (lastCount == 0 || !(lastCount < interval && lastCheckedCandlestick != null &&
-//                ((sellValue > minValue && buyValue < maxValue) ||
-//                        (closeValue > referenceCloseValue && sellValue > minValue) ||
-//                        (closeValue < referenceCloseValue && buyValue < maxValue)))) {
+ //               ((sellValue > minValue && buyValue < maxValue) ||
+ //               ((closeValue > referenceCloseValue && sellValue > minValue) ||
+ //                       (closeValue < referenceCloseValue && buyValue < maxValue)))) {
                 (sellValue > minValue && buyValue < maxValue))) {
             lastCount = 0;
             lastCheckedCandlestick = rawCandlestick;
@@ -93,7 +93,7 @@ public abstract class FixedTakeProfit implements RewardFunctionBuilder {
             selectedLabel = chooseLabel(nextCandlestick, buyValue, sellValue);
             if (!selectedLabel.equals(Label.NOTHING)) {
                 //System.out.println("Found "+selectedLabel+ " at "+i + " - lastCount: "+lastCount);
- //               System.out.println("Found "+selectedLabel+ " at "+i);
+                System.out.println("Found "+selectedLabel+ " at "+i);
                 break;
             } else {
                 rawCandlestick = nextCandlestick;

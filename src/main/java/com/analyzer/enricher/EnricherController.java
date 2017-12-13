@@ -71,7 +71,7 @@ public class EnricherController {
 
             // for now make it fix to close price
             ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(timeSeries);
-                Map<String, Indicator<Decimal>> indicators = new HashMap<>();
+            Map<String, Indicator<Decimal>> indicators = new HashMap<>();
             for (String indicatorName : enrichRequestForm.getIndicators()) {
                 Indicator<Decimal> indicator = IndicatorFactory.getIndicator(
                         closePriceIndicator, IndicatorValue.getIndicatorValue(indicatorName));
@@ -93,7 +93,6 @@ public class EnricherController {
                             new FxIndicator(indicatorName, indicators.get(indicatorName).getValue(i).toDouble())
                     );
                 }
-                rawCandlestickRepository.save(rawCandlestick);
             }
 
             for (String rewardFunctionName : enrichRequestForm.getRewardFunctions()) {
@@ -105,7 +104,8 @@ public class EnricherController {
                     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                 }
                 for (RawCandlestick candlestick : rawCandlestickList) {
-                    rawCandlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(candlestick));
+                    candlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(candlestick));
+                    rawCandlestickRepository.save(candlestick);
                 }
             }
 
