@@ -15,16 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.ta4j.core.Decimal;
-import org.ta4j.core.Indicator;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class EnricherController {
@@ -71,26 +67,20 @@ public class EnricherController {
 
             // for now make it fix to close price
             ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(timeSeries);
-                Map<String, Indicator<Decimal>> indicators = new HashMap<>();
-            for (String indicatorName : enrichRequestForm.getIndicators()) {
-                Indicator<Decimal> indicator = IndicatorFactory.getIndicator(
-                        closePriceIndicator, IndicatorValue.getIndicatorValue(indicatorName));
-                if (indicator == null) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
-                indicators.put(indicatorName,indicator);
-            }
 
+            // initial all necessary indicators in IndicatorFactory
+            List<IndicatorValue> indicatorList = new ArrayList<>();
+            for (String indicatorName : enrichRequestForm.getIndicators()) {
+                indicatorList.add(IndicatorValue.getIndicatorValue(indicatorName));
+            }
+            IndicatorFactory indicatorFactory = new IndicatorFactory(timeSeries, indicatorList);
+
+            // set value for each candles' indicator
             for (int i = 0; i < timeSeries.getTickCount(); i++){
                 rawCandlestick = rawCandlestickList.get(i);
-                for (String indicatorName : indicators.keySet()) {
+                for (IndicatorValue indicatorName : indicatorList) {
                     rawCandlestick.addIndicator(
-                            new FxIndicator(indicatorName, indicators.get(indicatorName).getValue(i).toDouble())
-                    );
-                }
-                for (String indicatorName : indicators.keySet()) {
-                    rawCandlestick.addIndicator(
-                            new FxIndicator(indicatorName, indicators.get(indicatorName).getValue(i).toDouble())
+                            new FxIndicator(indicatorName.getName(), indicatorFactory.getIndicatorValue(indicatorName, i))
                     );
                 }
                 rawCandlestickRepository.save(rawCandlestick);
@@ -105,7 +95,8 @@ public class EnricherController {
                     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                 }
                 for (RawCandlestick candlestick : rawCandlestickList) {
-                    rawCandlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(candlestick));
+                    candlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(candlestick));
+                    rawCandlestickRepository.save(candlestick);
                 }
             }
 
