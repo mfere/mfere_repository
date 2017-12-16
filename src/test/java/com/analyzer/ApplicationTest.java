@@ -130,7 +130,28 @@ public class ApplicationTest {
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
 		List<String> indicators = new ArrayList<>();
-		indicators.add(IndicatorValue.STANDARD_MACD.getName());
+		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.getName());
+		indicators.add(IndicatorValue.BEARISH_ENGULFING_CANDLE.getName());
+		indicators.add(IndicatorValue.BULLISH_HARAM_CANDLE.getName());
+		indicators.add(IndicatorValue.BEARISH_HARAM_CANDLE.getName());
+		indicators.add(IndicatorValue.SMA_5_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.SMA_5_UPWARD_OR_DOWNWARD.getName());
+		indicators.add(IndicatorValue.SMA_10_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.SMA_10_UPWARD_OR_DOWNWARD.getName());
+		indicators.add(IndicatorValue.SMA_50_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.SMA_50_UPWARD_OR_DOWNWARD.getName());
+		indicators.add(IndicatorValue.MACD_div_positive_or_negative.getName());
+		indicators.add(IndicatorValue.MACD_RAW.getName());
+		indicators.add(IndicatorValue.RSI_UPWARD_OR_DOWNWARD_SLOPING.getName());
+		indicators.add(IndicatorValue.RSI_OVER_BROUGHT_OR_SOLD.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_EXPANDING_OR_CONTRACTING.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_UPPER_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_LOWER_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_KD_OVER_BROUGHT_OR_SOLD.getName());
+		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_K_ABOVE_OR_BELOW_D.getName());
+
+
+
 		List<String> rewardFunctions = new ArrayList<>();
 		rewardFunctions.add(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
         //rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
@@ -192,10 +213,27 @@ public class ApplicationTest {
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
 		form.setNetworkConfiguration(readNetworkConfiguration("baseNetwork"));
-		form.setLearningRate(0.1);
+		form.setLearningRate(0.001);
 		List<String> indicators = new ArrayList<>();
-		indicators.add(IndicatorValue.STANDARD_MACD.getName());
-		form.setIndicators(indicators);
+		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.getName());
+		indicators.add(IndicatorValue.BEARISH_ENGULFING_CANDLE.getName());
+		indicators.add(IndicatorValue.BULLISH_HARAM_CANDLE.getName());
+		indicators.add(IndicatorValue.BEARISH_HARAM_CANDLE.getName());
+		indicators.add(IndicatorValue.SMA_5_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.SMA_5_UPWARD_OR_DOWNWARD.getName());
+		indicators.add(IndicatorValue.SMA_10_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.SMA_10_UPWARD_OR_DOWNWARD.getName());
+		indicators.add(IndicatorValue.SMA_50_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.SMA_50_UPWARD_OR_DOWNWARD.getName());
+		indicators.add(IndicatorValue.MACD_div_positive_or_negative.getName());
+		indicators.add(IndicatorValue.MACD_RAW.getName());
+		indicators.add(IndicatorValue.RSI_UPWARD_OR_DOWNWARD_SLOPING.getName());
+		indicators.add(IndicatorValue.RSI_OVER_BROUGHT_OR_SOLD.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_EXPANDING_OR_CONTRACTING.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_UPPER_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_LOWER_CLOSE_ABOVE_OR_BELOW.getName());
+		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_KD_OVER_BROUGHT_OR_SOLD.getName());
+		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_K_ABOVE_OR_BELOW_D.getName());		form.setIndicators(indicators);
 		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
 
 		ResponseEntity<String> response = template.postForEntity(
