@@ -25,7 +25,7 @@ public class IndicatorFactory {
     Map<IndicatorValue, Indicator<Decimal>> indicators = new HashMap<>();
     Map<IndicatorValue, Indicator<Boolean>> candlesIndicator = new HashMap<>();
 
-    IndicatorFactory(TimeSeries timeSeries, List<IndicatorValue> indicatorList) {
+    IndicatorFactory(TimeSeries timeSeries) {
         // put all indicators we will use
         candlesIndicator.put(IndicatorValue.BULLISH_ENGULFING_CANDLE, new BullishEngulfingIndicator(timeSeries));
         candlesIndicator.put(IndicatorValue.BEARISH_ENGULFING_CANDLE, new BearishEngulfingIndicator(timeSeries));
@@ -64,13 +64,13 @@ public class IndicatorFactory {
 
     /**
      * return value of a candle for training based on the strategy
-     * @param strategyValue
+     * @param indicatorValue
      * @param candleId
      * @return
      */
-    public Double getIndicatorValue(IndicatorValue strategyValue, int candleId) {
+    public Double getIndicatorValue(IndicatorValue indicatorValue, int candleId) {
 
-        switch (strategyValue) {
+        switch (indicatorValue) {
             case BULLISH_ENGULFING_CANDLE:
                 return candlesIndicator.get(IndicatorValue.BULLISH_ENGULFING_CANDLE).getValue(candleId) ?
                         TrainingValue.CANDLE_PATTERN_EXIST.getValue() : TrainingValue.NO_SIGNAL.getValue();
@@ -173,7 +173,7 @@ public class IndicatorFactory {
             case STOCHASTIC_OSCILLATOR_D_UPWARD_OR_DOWNWARD_SLOPING:
                 return upwardOrDownwardSloping(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_D_RAW), candleId, 3);
             default:
-                System.out.println("fail to get indicator value : " + strategyValue.getName());
+                System.out.println("fail to get indicator value : " + indicatorValue.getName());
                 return null;
         }
     }

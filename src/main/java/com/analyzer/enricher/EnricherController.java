@@ -72,7 +72,7 @@ public class EnricherController {
             for (String indicatorName : enrichRequestForm.getIndicators()) {
                 indicatorList.add(IndicatorValue.getIndicatorValue(indicatorName));
             }
-            IndicatorFactory indicatorFactory = new IndicatorFactory(timeSeries, indicatorList);
+            IndicatorFactory indicatorFactory = new IndicatorFactory(timeSeries);
 
             // set value for each candles' indicator
             for (int i = 0; i < timeSeries.getTickCount(); i++){
