@@ -67,7 +67,6 @@ public class EnricherController {
 
             // for now make it fix to close price
             ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(timeSeries);
-
             // initial all necessary indicators in IndicatorFactory
             List<IndicatorValue> indicatorList = new ArrayList<>();
             for (String indicatorName : enrichRequestForm.getIndicators()) {
@@ -83,7 +82,6 @@ public class EnricherController {
                             new FxIndicator(indicatorName.getName(), indicatorFactory.getIndicatorValue(indicatorName, i))
                     );
                 }
-                rawCandlestickRepository.save(rawCandlestick);
             }
 
             for (String rewardFunctionName : enrichRequestForm.getRewardFunctions()) {
