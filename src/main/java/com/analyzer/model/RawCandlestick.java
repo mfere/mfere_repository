@@ -110,7 +110,8 @@ public class RawCandlestick implements Persistable {
 
     // First column is always reward function
     public String toCsvLine(RewardFunctionValue rewardFunctionValue,
-                            List<IndicatorValue> indicatorValues) throws Exception {
+                            List<IndicatorValue> indicatorValues,
+                            boolean testConvergence) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         boolean found = false;
 
@@ -122,8 +123,13 @@ public class RawCandlestick implements Persistable {
                 if (rewardFunction.getName().equals(rewardFunctionValue.getName())) {
                     stringBuilder.append(rewardFunction.getValue());
                     found = true;
+                    if (testConvergence) {
+                        stringBuilder.append(",");
+                        stringBuilder.append(rewardFunction.getValue());
+                    }
                     break;
                 }
+
             }
             if (!found) {
                 throw new Exception("Reward function ("+rewardFunctionValue.getName()+") " +
@@ -136,16 +142,16 @@ public class RawCandlestick implements Persistable {
         }
 
         // Add mid high, low, start, end and volume as standard values
-        stringBuilder.append(",");
+        /*stringBuilder.append(",");
         stringBuilder.append(midRawCandlestickData.getHigh());
         stringBuilder.append(",");
         stringBuilder.append(midRawCandlestickData.getLow());
         stringBuilder.append(",");
         stringBuilder.append(midRawCandlestickData.getOpen());
         stringBuilder.append(",");
-        stringBuilder.append(midRawCandlestickData.getClose());
-        stringBuilder.append(",");
-        stringBuilder.append(volume);
+        stringBuilder.append(midRawCandlestickData.getClose());*/
+        //stringBuilder.append(",");
+        //stringBuilder.append(volume);
 
         if (fxIndicators != null) {
             for (IndicatorValue indicatorValue : indicatorValues) {

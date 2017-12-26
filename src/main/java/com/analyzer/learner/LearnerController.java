@@ -14,27 +14,22 @@ import org.datavec.api.split.FileSplit;
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
-import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.Layer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 import org.jetbrains.annotations.NotNull;
-import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
-import org.nd4j.linalg.learning.config.Nesterovs;
-import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -131,13 +126,13 @@ public class LearnerController {
 
             System.out.println("saved test temporary file: "+tmpTestFile.getAbsolutePath());
 
-            int seed = 123;
-            int nEpochs = 300;
-            int numInputs = 5 + learnerRequestForm.getIndicators().size();
+            int nEpochs = 3000;
+            int numInputs = learnerRequestForm.getIndicators().size();
+            if (learnerRequestForm.getTestConvergance()) {
+                numInputs++;
+            }
             int numOutputs = rewardFunction.getLabelNumber();
-            int numHiddenNodes = 20;
-            double learningRate = 0.01;
-            int batchNumber=10;
+            int batchNumber=50;
             int trainBatchSize=trainSize/batchNumber;
             int testBatchSize=testSize/batchNumber;
             System.out.println("batchNumber: "+ batchNumber);
@@ -148,27 +143,29 @@ public class LearnerController {
             rrTest.initialize(new FileSplit(new File(tmpTestFile.getAbsolutePath())));
 
             DataSetIterator testIterator = new RecordReaderDataSetIterator(
-                    rrTest, trainBatchSize, 0, rewardFunction.getLabelNumber());
+                    rrTest, testBatchSize, 0, rewardFunction.getLabelNumber());
 
             RecordReader rrTrain = new CSVRecordReader();
             rrTrain.initialize(new FileSplit(new File(tmpTrainFile.getAbsolutePath())));
 
             DataSetIterator trainIterator = new RecordReaderDataSetIterator(
-                    rrTrain, testBatchSize, 0, rewardFunction.getLabelNumber());
+                    rrTrain, trainBatchSize, 0, rewardFunction.getLabelNumber());
 
             // Normalize train data in range 0-1 for better learning
-            NormalizerStandardize testNormalizer = new NormalizerStandardize();
+            //NormalizerStandardize testNormalizer = new NormalizerStandardize();
+            NormalizerMinMaxScaler testNormalizer = new NormalizerMinMaxScaler();
             testNormalizer.fitLabel(true);
             testNormalizer.fit(testIterator);
             testIterator.setPreProcessor(testNormalizer);
 
             // Normalize test data in range 0-1 for more accurate scoring
-            NormalizerStandardize trainNormalizer = new NormalizerStandardize();
+            //NormalizerStandardize trainNormalizer = new NormalizerStandardize();
+            NormalizerMinMaxScaler trainNormalizer = new NormalizerMinMaxScaler();
             trainNormalizer.fitLabel(true);
             trainNormalizer.fit(trainIterator);
-            testIterator.setPreProcessor(trainNormalizer);
+            trainIterator.setPreProcessor(trainNormalizer);
 
-            MultiLayerConfiguration conf = getMultiLayerConfiguration(learnerRequestForm, numInputs, numOutputs);
+            MultiLayerConfiguration conf = createMultiLayerConfiguration(learnerRequestForm, numInputs, numOutputs);
 
             MultiLayerNetwork model = new MultiLayerNetwork(conf);
             model.init();
@@ -189,20 +186,30 @@ public class LearnerController {
 
             //ModelSerializer.writeModel(model,this.filePath,true);
 
-            System.out.println("Evaluate model....");
+            System.out.println("Evaluate train model....");
             Evaluation eval = new Evaluation(numOutputs);
+            while(trainIterator.hasNext()){
+                DataSet t = trainIterator.next();
+                INDArray features = t.getFeatureMatrix();
+                INDArray labels = t.getLabels();
+                INDArray predicted = model.output(features,true);
+                eval.eval(labels, predicted);
+            }
+            //Print the evaluation statistics
+            System.out.println(eval.stats());
+
+            System.out.println("Evaluate test model....");
+            eval = new Evaluation(numOutputs);
             while(testIterator.hasNext()){
                 DataSet t = testIterator.next();
                 INDArray features = t.getFeatureMatrix();
-                INDArray lables = t.getLabels();
+                INDArray labels = t.getLabels();
                 INDArray predicted = model.output(features,false);
-
-                eval.eval(lables, predicted);
-
+                eval.eval(labels, predicted);
             }
-
             //Print the evaluation statistics
             System.out.println(eval.stats());
+
             return new ResponseEntity<>("ok", HttpStatus.OK);
     } catch (Exception e) {
         e.printStackTrace();
@@ -222,21 +229,31 @@ public class LearnerController {
     }
 
     @NotNull
-    private MultiLayerConfiguration getMultiLayerConfiguration(
+    private MultiLayerConfiguration createMultiLayerConfiguration(
             LearnerRequestForm learnerRequestForm, int numInputs, int numOutputs) {
         String jsonConfiguration = learnerRequestForm.getNetworkConfiguration();
 
         MultiLayerConfiguration conf = MultiLayerConfiguration.fromJson(jsonConfiguration);
 
-        for (NeuralNetConfiguration configuration : conf.getConfs()){
-            Layer layer = configuration.getLayer();
+        NeuralNetConfiguration configuration = conf.getConfs().get(0);
+        Layer layer = configuration.getLayer();
+        if (layer instanceof DenseLayer) {
+            DenseLayer denseLayer = (DenseLayer) layer;
+            denseLayer.setNIn(numInputs);
+        }
+        configuration = conf.getConfs().get(conf.getConfs().size() - 1);
+        layer = configuration.getLayer();
+        if (layer instanceof OutputLayer) {
+            OutputLayer outputLayer = (OutputLayer) layer;
+            outputLayer.setNOut(numOutputs);
+        }
+        for (NeuralNetConfiguration aConfiguration : conf.getConfs()){
+            layer = aConfiguration.getLayer();
             if (layer instanceof DenseLayer) {
                 DenseLayer denseLayer = (DenseLayer)layer;
-                denseLayer.setNIn(numInputs);
                 denseLayer.setLearningRate(learnerRequestForm.getLearningRate());
             } else if (layer instanceof OutputLayer) {
                 OutputLayer outputLayer = (OutputLayer) layer;
-                outputLayer.setNOut(numOutputs);
                 outputLayer.setLearningRate(learnerRequestForm.getLearningRate());
             }
         }
@@ -259,7 +276,8 @@ public class LearnerController {
         }
         RewardFunctionValue rewardFunctionValue = RewardFunctionValue.getRewardFunctionValue(
                 learnerRequestForm.getRewardFunction());
-        printWriter.println(rawCandlestick.toCsvLine(rewardFunctionValue, indicatorValues));
+        printWriter.println(rawCandlestick.toCsvLine(rewardFunctionValue, indicatorValues,
+                learnerRequestForm.getTestConvergance() != null ? learnerRequestForm.getTestConvergance() : false));
         printWriter.flush();
         return rawCandlestick;
     }

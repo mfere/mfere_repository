@@ -150,6 +150,19 @@ public class ApplicationTest {
 		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_KD_OVER_BROUGHT_OR_SOLD.getName());
 		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_K_ABOVE_OR_BELOW_D.getName());
 
+		//indicators.add(IndicatorValue.MACD_RAW.getName());
+		indicators.add(IndicatorValue.VOLUME_RAW.getName());
+		indicators.add(IndicatorValue.SMA_5_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_10_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_50_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_100_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_200_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.RSI_RAW.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_WIDTH_RAW.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_LOWER_DIFF.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_UPPER_DIFF.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_MIDDLE_DIFF.getName());
+
 
 
 		List<String> rewardFunctions = new ArrayList<>();
@@ -213,7 +226,7 @@ public class ApplicationTest {
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
 		form.setNetworkConfiguration(readNetworkConfiguration("baseNetwork"));
-		form.setLearningRate(0.001);
+		form.setLearningRate(0.01);
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.getName());
 		indicators.add(IndicatorValue.BEARISH_ENGULFING_CANDLE.getName());
@@ -227,13 +240,44 @@ public class ApplicationTest {
 		indicators.add(IndicatorValue.SMA_50_UPWARD_OR_DOWNWARD.getName());
 		indicators.add(IndicatorValue.MACD_div_positive_or_negative.getName());
 		indicators.add(IndicatorValue.MACD_RAW.getName());
-		indicators.add(IndicatorValue.RSI_UPWARD_OR_DOWNWARD_SLOPING.getName());
-		indicators.add(IndicatorValue.RSI_OVER_BROUGHT_OR_SOLD.getName());
-		indicators.add(IndicatorValue.BOLLINGER_BAND_EXPANDING_OR_CONTRACTING.getName());
-		indicators.add(IndicatorValue.BOLLINGER_BAND_UPPER_CLOSE_ABOVE_OR_BELOW.getName());
-		indicators.add(IndicatorValue.BOLLINGER_BAND_LOWER_CLOSE_ABOVE_OR_BELOW.getName());
-		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_KD_OVER_BROUGHT_OR_SOLD.getName());
-		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_K_ABOVE_OR_BELOW_D.getName());		form.setIndicators(indicators);
+		form.setIndicators(indicators);
+		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
+		form.setTestConvergance(false);
+
+
+		ResponseEntity<String> response = template.postForEntity(
+				learnURI, form, String.class);
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals("ok",response.getBody());
+	}
+
+	@Test
+	public void testLearnRelative() throws Exception {
+		LearnerRequestForm form = new LearnerRequestForm();
+		form.setTrainFromDate("2010-01-04 00:00:00");
+		form.setTrainToDate("2015-12-31 00:00:00");
+		form.setTestFromDate("2016-01-04 00:00:00");
+		form.setTestToDate("2017-11-01 00:00:00");
+		form.setGranularity(GranularityValue.D.getName());
+		form.setInstrument(InstrumentValue.EUR_USD.name());
+		form.setNetworkConfiguration(readNetworkConfiguration("baseNetwork"));
+		form.setLearningRate(0.01);
+		List<String> indicators = new ArrayList<>();
+
+		indicators.add(IndicatorValue.MACD_RAW.getName());
+		indicators.add(IndicatorValue.VOLUME_RAW.getName());
+		indicators.add(IndicatorValue.SMA_5_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_10_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_50_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_100_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.SMA_200_CLOSE_DIFF.getName());
+		indicators.add(IndicatorValue.RSI_RAW.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_WIDTH_RAW.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_LOWER_DIFF.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_UPPER_DIFF.getName());
+		indicators.add(IndicatorValue.BOLLINGER_BAND_MIDDLE_DIFF.getName());
+		form.setIndicators(indicators);
+		form.setTestConvergance(true);
 		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
 
 		ResponseEntity<String> response = template.postForEntity(

@@ -29,5 +29,6 @@ public class LearnerRequestForm {
     private String rewardFunction;
     private String networkConfiguration;
     private Double learningRate;
+    private Boolean testConvergance;
 
  }

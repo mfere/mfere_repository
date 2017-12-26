@@ -93,7 +93,7 @@ public abstract class FixedTakeProfit implements RewardFunctionBuilder {
             selectedLabel = chooseLabel(nextCandlestick, buyValue, sellValue);
             if (!selectedLabel.equals(Label.NOTHING)) {
                 //System.out.println("Found "+selectedLabel+ " at "+i + " - lastCount: "+lastCount);
-                System.out.println("Found "+selectedLabel+ " at "+i);
+                //System.out.println("Found "+selectedLabel+ " at "+i);
                 break;
             } else {
                 rawCandlestick = nextCandlestick;

@@ -63,19 +63,15 @@ public class EnricherController {
                         instrument);
             }
 
-            TimeSeries timeSeries = TimeSeriesLoader.loadTimeSeries(rawCandlestickList);
-
-            // for now make it fix to close price
-            ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(timeSeries);
             // initial all necessary indicators in IndicatorFactory
             List<IndicatorValue> indicatorList = new ArrayList<>();
             for (String indicatorName : enrichRequestForm.getIndicators()) {
                 indicatorList.add(IndicatorValue.getIndicatorValue(indicatorName));
             }
-            IndicatorFactory indicatorFactory = new IndicatorFactory(timeSeries);
+            IndicatorFactory indicatorFactory = new IndicatorFactory(rawCandlestickList);
 
             // set value for each candles' indicator
-            for (int i = 0; i < timeSeries.getTickCount(); i++){
+            for (int i = 0; i < rawCandlestickList.size(); i++){
                 rawCandlestick = rawCandlestickList.get(i);
                 for (IndicatorValue indicatorName : indicatorList) {
                     rawCandlestick.addIndicator(
