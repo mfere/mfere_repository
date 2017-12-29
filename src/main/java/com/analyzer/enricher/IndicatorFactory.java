@@ -17,6 +17,7 @@ import org.ta4j.core.indicators.candles.BullishEngulfingIndicator;
 import org.ta4j.core.indicators.candles.BullishHaramiIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.helpers.VolumeIndicator;
+import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ public class IndicatorFactory {
         candlesIndicator.put(IndicatorValue.BEARISH_HARAM_CANDLE, new BearishHaramiIndicator(timeSeries));
 
         ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(timeSeries);
+        StandardDeviationIndicator sdIndicator = new StandardDeviationIndicator(closePriceIndicator,20);
         indicators.put(IndicatorValue.CLOSE_PRICE_RAW, closePriceIndicator);
         indicators.put(IndicatorValue.VOLUME_RAW, new VolumeIndicator(timeSeries));
 
@@ -51,9 +53,9 @@ public class IndicatorFactory {
         indicators.put(IndicatorValue.MACD_RAW, new MACDIndicator(closePriceIndicator, 12, 26));
 
         // bollinger band
-        BollingerBandsMiddleIndicator BBMiddle = new BollingerBandsMiddleIndicator(closePriceIndicator);
-        BollingerBandsUpperIndicator BBUpper = new BollingerBandsUpperIndicator(BBMiddle, closePriceIndicator);
-        BollingerBandsLowerIndicator BBLower = new BollingerBandsLowerIndicator(BBMiddle, closePriceIndicator);
+        BollingerBandsMiddleIndicator BBMiddle = new BollingerBandsMiddleIndicator(new SMAIndicator(closePriceIndicator, 20));
+        BollingerBandsUpperIndicator BBUpper = new BollingerBandsUpperIndicator(BBMiddle, sdIndicator);
+        BollingerBandsLowerIndicator BBLower = new BollingerBandsLowerIndicator(BBMiddle, sdIndicator);
         indicators.put(IndicatorValue.BOLLINGER_BAND_MIDDLE_RAW, BBMiddle);
         indicators.put(IndicatorValue.BOLLINGER_BAND_UPPER_RAW, BBUpper);
         indicators.put(IndicatorValue.BOLLINGER_BAND_LOWER_RAW, BBLower);

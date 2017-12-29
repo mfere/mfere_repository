@@ -152,8 +152,8 @@ public class LearnerController {
                     rrTrain, trainBatchSize, 0, rewardFunction.getLabelNumber());
 
             // Normalize train data in range 0-1 for better learning
-            //NormalizerStandardize testNormalizer = new NormalizerStandardize();
-            NormalizerMinMaxScaler testNormalizer = new NormalizerMinMaxScaler();
+            NormalizerStandardize testNormalizer = new NormalizerStandardize();
+            //NormalizerMinMaxScaler testNormalizer = new NormalizerMinMaxScaler();
             testNormalizer.fitLabel(true);
             testNormalizer.fit(testIterator);
             testIterator.setPreProcessor(testNormalizer);

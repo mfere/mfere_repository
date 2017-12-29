@@ -225,7 +225,7 @@ public class ApplicationTest {
 		form.setTestToDate("2017-11-01 00:00:00");
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
-		form.setNetworkConfiguration(readNetworkConfiguration("baseNetwork"));
+		form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
 		form.setLearningRate(0.01);
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.getName());
@@ -260,7 +260,7 @@ public class ApplicationTest {
 		form.setTestToDate("2017-11-01 00:00:00");
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
-		form.setNetworkConfiguration(readNetworkConfiguration("baseNetwork"));
+		form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
 		form.setLearningRate(0.01);
 		List<String> indicators = new ArrayList<>();
 
@@ -277,7 +277,7 @@ public class ApplicationTest {
 		indicators.add(IndicatorValue.BOLLINGER_BAND_UPPER_DIFF.getName());
 		indicators.add(IndicatorValue.BOLLINGER_BAND_MIDDLE_DIFF.getName());
 		form.setIndicators(indicators);
-		form.setTestConvergance(true);
+		form.setTestConvergance(false);
 		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
 
 		ResponseEntity<String> response = template.postForEntity(
