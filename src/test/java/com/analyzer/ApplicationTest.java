@@ -163,12 +163,11 @@ public class ApplicationTest {
 		indicators.add(IndicatorValue.BOLLINGER_BAND_UPPER_DIFF.getName());
 		indicators.add(IndicatorValue.BOLLINGER_BAND_MIDDLE_DIFF.getName());
 
-
-
 		List<String> rewardFunctions = new ArrayList<>();
 		rewardFunctions.add(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
-        //rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
-		//rewardFunctions.add(RewardFunctionValue.S_TAKE_PROFIT_001_24.getName());
+        rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
+		rewardFunctions.add(RewardFunctionValue.S_TAKE_PROFIT_001_24.getName());
+		rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_005_24.getName());
 		form.setIndicators(indicators);
 		form.setRewardFunctions(rewardFunctions);
 
@@ -242,6 +241,7 @@ public class ApplicationTest {
 		indicators.add(IndicatorValue.MACD_RAW.getName());
 		form.setIndicators(indicators);
 		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
+		//form.setRewardFunction(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
 		form.setTestConvergance(false);
 
 

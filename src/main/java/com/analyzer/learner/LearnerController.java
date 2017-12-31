@@ -126,7 +126,7 @@ public class LearnerController {
 
             System.out.println("saved test temporary file: "+tmpTestFile.getAbsolutePath());
 
-            int nEpochs = 3000;
+            int nEpochs = 1000;
             int numInputs = learnerRequestForm.getIndicators().size();
             if (learnerRequestForm.getTestConvergance()) {
                 numInputs++;

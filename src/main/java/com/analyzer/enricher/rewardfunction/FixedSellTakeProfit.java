@@ -12,7 +12,7 @@ public class FixedSellTakeProfit extends FixedTakeProfit {
     protected Label chooseLabel(RawCandlestick nextCandlestick,
                                 double buyValue,
                                 double sellValue){
-        if (nextCandlestick.getBidRawCandlestickData().getLow() <= sellValue) {
+        if (nextCandlestick.getMidRawCandlestickData().getLow() <= sellValue) {
             return Label.SELL;
         } else {
             return Label.NOTHING;
