@@ -90,8 +90,11 @@ public class EnricherController {
                 }
                 for (RawCandlestick candlestick : rawCandlestickList) {
                     candlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(candlestick));
-                    rawCandlestickRepository.save(candlestick);
                 }
+            }
+
+            for (RawCandlestick candlestick : rawCandlestickList) {
+                rawCandlestickRepository.save(candlestick);
             }
 
             return new ResponseEntity<>("ok", HttpStatus.OK);

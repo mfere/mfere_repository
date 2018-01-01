@@ -61,7 +61,7 @@ public class OandaClient {
                 request.setFrom(new DateTime(fromDate.toString()));
             }
             if (toDate != null) {
-                request.setFrom(new DateTime(toDate.toString()));
+                request.setTo(new DateTime(toDate.toString()));
             }
 
             GranularityValue granularityValue = GranularityValue.getGranularityValue(granularity);
@@ -97,7 +97,7 @@ public class OandaClient {
                 Candlestick lastCandlestick = response.getCandles().get(response.getCandles().size() - 1);
                 lastDate = Instant.parse(lastCandlestick.getTime());
 
-                if ((toDate == null || lastDate.isBefore(toDate)) && !lastCandlestick.getComplete()) {
+                if (toDate == null || (lastDate.isBefore(toDate)) && !lastCandlestick.getComplete()) {
                     fromDate = lastDate;
                     sleep(1300);
                     keepRead = true;

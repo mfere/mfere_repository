@@ -127,7 +127,7 @@ public class ApplicationTest {
 		EnrichRequestForm form = new EnrichRequestForm();
 		form.setFromDate("2010-01-04 00:00:00");
 		form.setToDate("2017-11-15 00:00:00");
-		form.setGranularity(GranularityValue.D.getName());
+		form.setGranularity(GranularityValue.H1.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.getName());
@@ -260,7 +260,7 @@ public class ApplicationTest {
 		form.setTestToDate("2017-11-01 00:00:00");
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
-		form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
+		form.setNetworkConfiguration(readNetworkConfiguration("5layerNetwork"));
 		form.setLearningRate(0.01);
 		List<String> indicators = new ArrayList<>();
 
