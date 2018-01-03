@@ -1,9 +1,6 @@
 package com.analyzer;
 
-import com.analyzer.constants.GranularityValue;
-import com.analyzer.constants.IndicatorValue;
-import com.analyzer.constants.InstrumentValue;
-import com.analyzer.constants.RewardFunctionValue;
+import com.analyzer.constants.*;
 import com.analyzer.enricher.EnrichRequestForm;
 import com.analyzer.learner.LearnerRequestForm;
 import com.analyzer.model.FxIndicator;
@@ -127,7 +124,7 @@ public class ApplicationTest {
 		EnrichRequestForm form = new EnrichRequestForm();
 		form.setFromDate("2010-01-04 00:00:00");
 		form.setToDate("2017-11-15 00:00:00");
-		form.setGranularity(GranularityValue.H1.getName());
+		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.getName());
@@ -167,7 +164,7 @@ public class ApplicationTest {
 		rewardFunctions.add(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
         rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
 		rewardFunctions.add(RewardFunctionValue.S_TAKE_PROFIT_001_24.getName());
-		rewardFunctions.add(RewardFunctionValue.B_TAKE_PROFIT_005_24.getName());
+		rewardFunctions.add(RewardFunctionValue.BS_TAKE_PROFIT_005_60.getName());
 		form.setIndicators(indicators);
 		form.setRewardFunctions(rewardFunctions);
 
@@ -224,8 +221,9 @@ public class ApplicationTest {
 		form.setTestToDate("2017-11-01 00:00:00");
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
-		form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
+		form.setNetworkConfiguration(readNetworkConfiguration("3layer50HiddenNetwork"));
 		form.setLearningRate(0.01);
+        form.setStopCondition(StopConditionValue.BEST_SCORE_TEST_LAST_10.name());
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.getName());
 		indicators.add(IndicatorValue.BEARISH_ENGULFING_CANDLE.getName());
@@ -240,10 +238,10 @@ public class ApplicationTest {
 		indicators.add(IndicatorValue.MACD_div_positive_or_negative.getName());
 		indicators.add(IndicatorValue.MACD_RAW.getName());
 		form.setIndicators(indicators);
-		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_24.getName());
-		//form.setRewardFunction(RewardFunctionValue.B_TAKE_PROFIT_001_24.getName());
+		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_60.getName());
+		form.setStopCondition(StopConditionValue.FIXED_EPOC_LENGTH_500.name());
+		//form.setRewardFunction(RewardFunctionValue.B_TAKE_PROFIT_001_24.name());
 		form.setTestConvergance(false);
-
 
 		ResponseEntity<String> response = template.postForEntity(
 				learnURI, form, String.class);
@@ -260,8 +258,9 @@ public class ApplicationTest {
 		form.setTestToDate("2017-11-01 00:00:00");
 		form.setGranularity(GranularityValue.D.getName());
 		form.setInstrument(InstrumentValue.EUR_USD.name());
-		form.setNetworkConfiguration(readNetworkConfiguration("5layerNetwork"));
+		form.setNetworkConfiguration(readNetworkConfiguration("3layer50HiddenNetwork"));
 		form.setLearningRate(0.01);
+		form.setStopCondition(StopConditionValue.BEST_SCORE_TEST_LAST_10.name());
 		List<String> indicators = new ArrayList<>();
 
 		indicators.add(IndicatorValue.MACD_RAW.getName());

@@ -10,6 +10,8 @@ import com.oanda.v20.instrument.InstrumentCandlesRequest;
 import com.oanda.v20.instrument.InstrumentCandlesResponse;
 import com.oanda.v20.primitives.DateTime;
 import com.oanda.v20.primitives.InstrumentName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import static java.lang.Thread.sleep;
 
 @Service
 public class OandaClient {
+
+    private static final Logger log = LoggerFactory.getLogger(OandaClient.class);
 
     private static final int MAX_RECORD_COUNT = 4000;
 
@@ -75,7 +79,7 @@ public class OandaClient {
             request.setAlignmentTimezone("UTC");
             request.setPrice(readRequestForm.getPrice());
             request.setCount(MAX_RECORD_COUNT);
-            System.out.println("Starting read using parameters: "
+            log.info("Starting read using parameters: "
                     + ", fromDate: " + fromDate
                     + ", toDate: " + toDate
                     + ", granularity: " + granularityValue.getGranularity()

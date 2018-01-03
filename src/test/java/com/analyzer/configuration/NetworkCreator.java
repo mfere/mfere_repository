@@ -102,6 +102,43 @@ public class NetworkCreator {
         writeToFile(networkName, conf);
     }
 
+    @Test
+    public void create3Layer50HiddenNetwork() {
+        String networkName = "3layer50HiddenNetwork";
+        int seed = 123;
+        double learningRate = 0.001;
+        int numInputs = 2; // This will be overwritten
+        int numOutputs = 2; // This will be overwritten
+        int numHiddenNodes = 50;
+
+
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(seed)
+                .biasInit(1)
+                .regularization(true).l2(1e-4)
+                .iterations(1)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .learningRate(learningRate)
+                .updater(Updater.NESTEROVS)
+                .list()
+                .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenNodes)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(1, new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.SOFTMAX)
+                        .nIn(numHiddenNodes).nOut(numOutputs).build())
+                .pretrain(false).backprop(true).build();
+
+        System.out.println(conf.toJson());
+        writeToFile(networkName, conf);
+    }
+
 
 
     private void writeToFile(String networkName, MultiLayerConfiguration conf) {

@@ -3,6 +3,8 @@ package com.analyzer.enricher;
 import com.analyzer.constants.IndicatorValue;
 import com.analyzer.constants.TrainingValue;
 import com.analyzer.model.RawCandlestick;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.TimeSeries;
@@ -23,7 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class IndicatorFactory {
+class IndicatorFactory {
+
+    private static final Logger log = LoggerFactory.getLogger(IndicatorFactory.class);
 
     private Map<IndicatorValue, Indicator<Decimal>> indicators = new HashMap<>();
     private Map<IndicatorValue, Indicator<Boolean>> candlesIndicator = new HashMap<>();
@@ -204,7 +208,7 @@ public class IndicatorFactory {
             case VOLUME_RAW:
                 return indicators.get(IndicatorValue.VOLUME_RAW).getValue(candleId).toDouble();
             default:
-                System.out.println("fail to get indicator value : " + indicatorValue.getName());
+                log.info("fail to get indicator value : " + indicatorValue.getName());
                 return null;
         }
     }
@@ -246,9 +250,9 @@ public class IndicatorFactory {
     private Double upwardOrDownwardSloping(Indicator<Decimal> indicator, int candleId, int timeFrame) {
         int startIndex = Math.max(0, candleId - timeFrame + 1);
         int endIndex = candleId;
-        if (endIndex - startIndex + 1 < 2) {
+        if (candleId - startIndex + 1 < 2) {
             // Not enough candle to compute a regression line. i.e. only 1 candle
-            System.out.println("Not enough candle to compute a regression line for candle " + candleId);
+            log.info("Not enough candle to compute a regression line for candle " + candleId);
             return 0d;
         }
 

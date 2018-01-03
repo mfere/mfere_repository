@@ -30,5 +30,6 @@ public class LearnerRequestForm {
     private String networkConfiguration;
     private Double learningRate;
     private Boolean testConvergance;
+    private String stopCondition;
 
  }

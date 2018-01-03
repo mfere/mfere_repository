@@ -11,6 +11,8 @@ import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReadRequestForm;
 import com.analyzer.reader.ReaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -24,6 +26,8 @@ import java.util.List;
 
 @RestController
 public class EnricherController {
+
+    private static final Logger log = LoggerFactory.getLogger(EnricherController.class);
 
     private final RawCandlestickRepository rawCandlestickRepository;
 
@@ -85,7 +89,7 @@ public class EnricherController {
                         RewardFunctionValue.getRewardFunctionValue(rewardFunctionName),
                         rawCandlestickRepository);
                 if (rewardFunctionBuilder == null) {
-                    System.out.println("No reward builder found");
+                    log.info("No reward builder found");
                     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                 }
                 for (RawCandlestick candlestick : rawCandlestickList) {

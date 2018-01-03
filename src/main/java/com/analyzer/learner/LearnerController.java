@@ -1,9 +1,8 @@
 package com.analyzer.learner;
 
-import com.analyzer.constants.GranularityValue;
-import com.analyzer.constants.IndicatorValue;
-import com.analyzer.constants.InstrumentValue;
-import com.analyzer.constants.RewardFunctionValue;
+import com.analyzer.constants.*;
+import com.analyzer.learner.stopcondition.StopCondition;
+import com.analyzer.learner.stopcondition.StopConditionFactory;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReadRequestForm;
@@ -30,6 +29,8 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -43,6 +44,8 @@ import java.util.List;
 
 @RestController
 public class LearnerController {
+
+    private static final Logger log = LoggerFactory.getLogger(LearnerController.class);
 
     private final RawCandlestickRepository rawCandlestickRepository;
     private final UIServer uiServer;
@@ -102,7 +105,7 @@ public class LearnerController {
                 rawCandlestick = writeCsvFile(learnerRequestForm, rawCandlestick, printWriter, granularity, instrument);
                 trainSize++;
             }
-            System.out.println("saved train temporary file: "+tmpTrainFile.getAbsolutePath());
+            log.info("saved train temporary file: "+tmpTrainFile.getAbsolutePath());
 
             // TEST DATA CREATION
             rawCandlestick = rawCandlestickRepository.findOne(
@@ -124,9 +127,8 @@ public class LearnerController {
                 testSize++;
             }
 
-            System.out.println("saved test temporary file: "+tmpTestFile.getAbsolutePath());
+            log.info("saved test temporary file: "+tmpTestFile.getAbsolutePath());
 
-            int nEpochs = 1000;
             int numInputs = learnerRequestForm.getIndicators().size();
             if (learnerRequestForm.getTestConvergance()) {
                 numInputs++;
@@ -135,9 +137,9 @@ public class LearnerController {
             int batchNumber=50;
             int trainBatchSize=trainSize/batchNumber;
             int testBatchSize=testSize/batchNumber;
-            System.out.println("batchNumber: "+ batchNumber);
-            System.out.println("trainBatchSize: "+ trainBatchSize);
-            System.out.println("testBatchSize: "+ testBatchSize);
+            log.info("batchNumber: "+ batchNumber);
+            log.info("trainBatchSize: "+ trainBatchSize);
+            log.info("testBatchSize: "+ testBatchSize);
 
             RecordReader rrTest = new CSVRecordReader();
             rrTest.initialize(new FileSplit(new File(tmpTestFile.getAbsolutePath())));
@@ -148,8 +150,22 @@ public class LearnerController {
             RecordReader rrTrain = new CSVRecordReader();
             rrTrain.initialize(new FileSplit(new File(tmpTrainFile.getAbsolutePath())));
 
+            RecordReader rrScoreTrain = new CSVRecordReader();
+            rrScoreTrain.initialize(new FileSplit(new File(tmpTrainFile.getAbsolutePath())));
+
+
+            RecordReader rrScoreTest = new CSVRecordReader();
+            rrScoreTest.initialize(new FileSplit(new File(tmpTestFile.getAbsolutePath())));
+
+
             DataSetIterator trainIterator = new RecordReaderDataSetIterator(
                     rrTrain, trainBatchSize, 0, rewardFunction.getLabelNumber());
+
+            DataSetIterator testScoreIterator = new RecordReaderDataSetIterator(
+                    rrScoreTest, testBatchSize, 0, rewardFunction.getLabelNumber());
+
+            DataSetIterator trainScoreIterator = new RecordReaderDataSetIterator(
+                    rrScoreTrain, trainBatchSize, 0, rewardFunction.getLabelNumber());
 
             // Normalize train data in range 0-1 for better learning
             NormalizerStandardize testNormalizer = new NormalizerStandardize();
@@ -173,20 +189,26 @@ public class LearnerController {
             StatsStorage statsStorage = new InMemoryStatsStorage();
             uiServer.attach(statsStorage);
             model.setListeners(new StatsListener(statsStorage));
-            model.setListeners(new ScoreIterationListener());
+            model.setListeners(new ScoreIterationListener(1000));
 
-            for ( int n = 0; n < nEpochs; n++)
-            {
+            StopCondition stopCondition = StopConditionFactory.getStopCondition(
+                    StopConditionValue.valueOf(learnerRequestForm.getStopCondition()), model,
+                    trainScoreIterator, testScoreIterator);
+            if (stopCondition == null) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
+            do {
                 while(trainIterator.hasNext())
                 {
                     model.fit(trainIterator.next());
                 }
                 trainIterator.reset();
-            }
+            } while (!stopCondition.isConditionMet());
 
             //ModelSerializer.writeModel(model,this.filePath,true);
-
-            System.out.println("Evaluate train model....");
+            model = stopCondition.getBestConfiguration();
+            log.info("Evaluate train model....");
             Evaluation eval = new Evaluation(numOutputs);
             while(trainIterator.hasNext()){
                 DataSet t = trainIterator.next();
@@ -196,9 +218,9 @@ public class LearnerController {
                 eval.eval(labels, predicted);
             }
             //Print the evaluation statistics
-            System.out.println(eval.stats());
+            log.info(eval.stats());
 
-            System.out.println("Evaluate test model....");
+            log.info("Evaluate test model....");
             eval = new Evaluation(numOutputs);
             while(testIterator.hasNext()){
                 DataSet t = testIterator.next();
@@ -208,7 +230,7 @@ public class LearnerController {
                 eval.eval(labels, predicted);
             }
             //Print the evaluation statistics
-            System.out.println(eval.stats());
+            log.info(eval.stats());
 
             return new ResponseEntity<>("ok", HttpStatus.OK);
     } catch (Exception e) {

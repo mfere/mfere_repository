@@ -6,6 +6,8 @@ import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.client.OandaClient;
 import com.oanda.v20.instrument.Candlestick;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,8 @@ import java.util.List;
 
 @RestController
 public class ReaderController {
+
+    private static final Logger log = LoggerFactory.getLogger(ReaderController.class);
 
     private final RawCandlestickRepository rawCandlestickRepository;
     private final OandaClient oandaClient;
@@ -70,7 +74,7 @@ public class ReaderController {
                                 granularity,
                                 instrument,
                                 previous, next);
-                        System.out.println("Saved new value: "+rawCandlestick);
+                        log.info("Saved new value: "+rawCandlestick);
                     } else if ((rawCandlestick.getNextDateTime() == null && next != null)
                             || (rawCandlestick.getPrevDateTime() == null && previous != null)) {
                         if (next != null) {
@@ -80,7 +84,7 @@ public class ReaderController {
                             rawCandlestick.setPrevDateTime(Instant.parse(previous.getTime()));
                         }
                         rawCandlestick = rawCandlestickRepository.save(rawCandlestick);
-                        System.out.println("Updated value: "+rawCandlestick);
+                        log.info("Updated value: "+rawCandlestick);
                     }
                     previous = candles.get(i);
                 }

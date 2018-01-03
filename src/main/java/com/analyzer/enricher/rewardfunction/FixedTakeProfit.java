@@ -26,7 +26,7 @@ public abstract class FixedTakeProfit implements RewardFunctionBuilder {
         double sellValue = closeValue - distance;
         double buyValue = closeValue + distance;
         Label selectedLabel = getLabel(closePriceCandlestick, granularity, interval, instrument, sellValue, buyValue);
-        //System.out.println("found label: "+ selectedLabel);
+        //log.info("found label: "+ selectedLabel);
         return new RewardFunction(name, selectedLabel.getValue());
     }
 
