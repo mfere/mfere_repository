@@ -21,6 +21,9 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.helpers.VolumeIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +34,10 @@ class IndicatorFactory {
 
     private Map<IndicatorValue, Indicator<Decimal>> indicators = new HashMap<>();
     private Map<IndicatorValue, Indicator<Boolean>> candlesIndicator = new HashMap<>();
+    private List<RawCandlestick> rawCandlestickList;
 
     IndicatorFactory(List<RawCandlestick> rawCandlestickList) {
+        this.rawCandlestickList = rawCandlestickList;
         TimeSeries timeSeries = TimeSeriesLoader.loadTimeSeries(rawCandlestickList);
 
         // put all indicators we will use
@@ -113,7 +118,6 @@ class IndicatorFactory {
                 return isDownwardSloping(indicators.get(IndicatorValue.SMA_5_RAW), candleId, 5);
             case SMA_5_CLOSE_DIFF:
                 return difference(indicators.get(IndicatorValue.SMA_5_RAW), indicators.get(IndicatorValue.CLOSE_PRICE_RAW), candleId);
-
 
             // SMA 10
             case SMA_10_RAW:
@@ -263,8 +267,14 @@ class IndicatorFactory {
                 return isUpwardSloping(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_D_RAW), candleId, 3);
             case STOCHASTIC_OSCILLATOR_IS_D_DOWNWARD_SLOPING:
                 return isDownwardSloping(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_D_RAW), candleId, 3);
+
+            // others
             case VOLUME_RAW:
                 return indicators.get(IndicatorValue.VOLUME_RAW).getValue(candleId).toDouble();
+            case IS_TOMORROW_HOLIDAY:
+                return isTomorrowHoliday(candleId);
+            case IS_YESTERDAY_HOLIDAY:
+                return isYesterdayHoliday(candleId);
             default:
                 log.info("fail to get indicator value : " + indicatorValue.getName());
                 return null;
@@ -421,4 +431,53 @@ class IndicatorFactory {
         return TrainingValue.INDICATOR_NOT_EXIST.getValue();
     }
 
+    /**
+     * check is yesterday holiday.
+     *
+     * @param candleId
+     * @return
+     */
+    private Double isYesterdayHoliday(int candleId) {
+        RawCandlestick currentCandle = rawCandlestickList.get(candleId);
+        LocalDate today = currentCandle.getCurrentDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
+        LocalDate prevDateCandle = today;
+        // get the next date time
+        for (int i = candleId ;i >= 0 ; i--) {
+            prevDateCandle = rawCandlestickList.get(i).getPrevDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
+            if (!today.isEqual(prevDateCandle)) {
+                break;
+            }
+        }
+
+        if (!today.minusDays(1).isEqual(prevDateCandle)) {
+            return TrainingValue.INDICATOR_EXIST.getValue();
+
+        }
+        return TrainingValue.INDICATOR_NOT_EXIST.getValue();
+    }
+
+    /**
+     * check is tomorrow holiday.
+     *
+     * @param candleId
+     * @return
+     */
+    private Double isTomorrowHoliday(int candleId) {
+        RawCandlestick currentCandle = rawCandlestickList.get(candleId);
+        LocalDate today = currentCandle.getCurrentDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
+        LocalDate nextDateCandle = today;
+        // get the next date time
+        for (int i = candleId ;i <= rawCandlestickList.size() ; i++) {
+            nextDateCandle = rawCandlestickList.get(i).getNextDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
+            if (!today.isEqual(nextDateCandle)) {
+                break;
+            }
+        }
+
+        if (!today.plusDays(1).isEqual(nextDateCandle)) {
+            return TrainingValue.INDICATOR_EXIST.getValue();
+
+        }
+        return TrainingValue.INDICATOR_NOT_EXIST.getValue();
+    }
 }

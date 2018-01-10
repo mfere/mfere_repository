@@ -160,9 +160,10 @@ public class ApplicationTest {
 		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_IS_KD_OVER_SOLD.getName());
 		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_K_ABOVE_D.getName());
 		indicators.add(IndicatorValue.STOCHASTIC_OSCILLATOR_K_BELOW_D.getName());
-
-		//indicators.add(IndicatorValue.MACD_RAW.getName());
 		indicators.add(IndicatorValue.VOLUME_RAW.getName());
+		indicators.add(IndicatorValue.IS_YESTERDAY_HOLIDAY.getName());
+		indicators.add(IndicatorValue.IS_TOMORROW_HOLIDAY.getName());
+
 		indicators.add(IndicatorValue.SMA_5_CLOSE_DIFF.getName());
 		indicators.add(IndicatorValue.SMA_10_CLOSE_DIFF.getName());
 		indicators.add(IndicatorValue.SMA_50_CLOSE_DIFF.getName());

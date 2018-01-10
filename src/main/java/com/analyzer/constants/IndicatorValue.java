@@ -81,7 +81,7 @@ public enum IndicatorValue {
     BOLLINGER_BAND_UPPER_DIFF("bollinger_band_upper_diff"),
     BOLLINGER_BAND_MIDDLE_DIFF("bollinger_band_middle_diff"),
 
-    //Stochastic Oscillator
+    // Stochastic Oscillator
     STOCHASTIC_OSCILLATOR_RAW("stochastic_oscillator_raw"),
     STOCHASTIC_OSCILLATOR_K_RAW("stochastic_oscillator_K_raw"),
     STOCHASTIC_OSCILLATOR_D_RAW("stochastic_oscillator_D_raw"),
@@ -92,8 +92,11 @@ public enum IndicatorValue {
     STOCHASTIC_OSCILLATOR_IS_K_UPWARD_SLOPING("stochastic_oscillator_is_K_upward_sloping"),
     STOCHASTIC_OSCILLATOR_IS_K_DOWNWARD_SLOPING("stochastic_oscillator_is_K_downward_sloping"),
     STOCHASTIC_OSCILLATOR_IS_D_UPWARD_SLOPING("stochastic_oscillator_D_upward_sloping"),
-    STOCHASTIC_OSCILLATOR_IS_D_DOWNWARD_SLOPING("stochastic_oscillator_D_downward_sloping");
+    STOCHASTIC_OSCILLATOR_IS_D_DOWNWARD_SLOPING("stochastic_oscillator_D_downward_sloping"),
 
+    // holiday
+    IS_YESTERDAY_HOLIDAY("is_yesterday_holiday"),
+    IS_TOMORROW_HOLIDAY("is_tomorrow_holiday");
 
     String name;
 
