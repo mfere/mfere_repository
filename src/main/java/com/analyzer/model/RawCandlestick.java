@@ -37,6 +37,7 @@ public class RawCandlestick implements Persistable {
     private RawCandlestickData askRawCandlestickData;
     private RawCandlestickData midRawCandlestickData;
     private Instant nextDateTime;
+    private Instant currentDateTime;
     private Instant prevDateTime;
     private FxIndicator[] fxIndicators;
     private RewardFunction[] strategies;
@@ -53,6 +54,7 @@ public class RawCandlestick implements Persistable {
         bidRawCandlestickData = new RawCandlestickData(candlestick.getBid());
         this.volume = candlestick.getVolume();
         this.prevDateTime = prevCandlestick != null ? Instant.parse(prevCandlestick.getTime()) : null;
+        this.currentDateTime = Instant.parse(candlestick.getTime());
         this.nextDateTime = nextCandlestick != null ? Instant.parse(nextCandlestick.getTime()) : null;
         this.rawCandlestickKey = new RawCandlestickKey(
                 Instant.parse(candlestick.getTime()),
