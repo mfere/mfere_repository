@@ -23,6 +23,7 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
+import org.deeplearning4j.util.ModelSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -31,6 +32,7 @@ import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -38,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -49,11 +52,14 @@ public class LearnerController {
 
     private final RawCandlestickRepository rawCandlestickRepository;
     private final UIServer uiServer;
+    private String trainedNetworksPath;
 
     LearnerController(RawCandlestickRepository rawCandlestickRepository,
-                      UIServer uiServer) {
+                      UIServer uiServer,
+                      @Value("${trained.network.path}") String trainedNetworksPath) {
         this.rawCandlestickRepository = rawCandlestickRepository;
         this.uiServer = uiServer;
+        this.trainedNetworksPath = trainedNetworksPath;
     }
 
     @RequestMapping(value = "/learn", method = RequestMethod.POST)
@@ -167,19 +173,21 @@ public class LearnerController {
             DataSetIterator trainScoreIterator = new RecordReaderDataSetIterator(
                     rrScoreTrain, trainBatchSize, 0, rewardFunction.getLabelNumber());
 
-            // Normalize train data in range 0-1 for better learning
-            NormalizerStandardize testNormalizer = new NormalizerStandardize();
-            //NormalizerMinMaxScaler testNormalizer = new NormalizerMinMaxScaler();
-            testNormalizer.fitLabel(true);
-            testNormalizer.fit(testIterator);
-            testIterator.setPreProcessor(testNormalizer);
-
             // Normalize test data in range 0-1 for more accurate scoring
             //NormalizerStandardize trainNormalizer = new NormalizerStandardize();
             NormalizerMinMaxScaler trainNormalizer = new NormalizerMinMaxScaler();
             trainNormalizer.fitLabel(true);
             trainNormalizer.fit(trainIterator);
             trainIterator.setPreProcessor(trainNormalizer);
+
+            // Normalize train data in range 0-1 for better learning
+             NormalizerStandardize testNormalizer = new NormalizerStandardize();
+            //NormalizerMinMaxScaler testNormalizer = new NormalizerMinMaxScaler();
+            testNormalizer.fitLabel(true);
+            testNormalizer.fit(testIterator);
+            testIterator.setPreProcessor(testNormalizer);
+            //testIterator.setPreProcessor(trainNormalizer);
+
 
             MultiLayerConfiguration conf = createMultiLayerConfiguration(learnerRequestForm, numInputs, numOutputs);
 
@@ -188,8 +196,7 @@ public class LearnerController {
 
             StatsStorage statsStorage = new InMemoryStatsStorage();
             uiServer.attach(statsStorage);
-            model.setListeners(new StatsListener(statsStorage));
-            model.setListeners(new ScoreIterationListener(1000));
+            model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(1000));
 
             StopCondition stopCondition = StopConditionFactory.getStopCondition(
                     StopConditionValue.valueOf(learnerRequestForm.getStopCondition()), model,
@@ -201,7 +208,9 @@ public class LearnerController {
             do {
                 while(trainIterator.hasNext())
                 {
-                    model.fit(trainIterator.next());
+                    DataSet next = trainIterator.next();
+                    next.shuffle(123132);
+                    model.fit(next);
                 }
                 trainIterator.reset();
             } while (!stopCondition.isConditionMet());
@@ -229,8 +238,13 @@ public class LearnerController {
                 INDArray predicted = model.output(features,false);
                 eval.eval(labels, predicted);
             }
-            //Print the evaluation statistics
+            // Print the evaluation statistics
             log.info(eval.stats());
+
+            // Save the model
+            int score = (int) (eval.f1()*10000);
+            String filePath = trainedNetworksPath+"/"+learnerRequestForm.getName()+"_"+score+".model";
+            ModelSerializer.writeModel(model, filePath,true);
 
             return new ResponseEntity<>("ok", HttpStatus.OK);
     } catch (Exception e) {

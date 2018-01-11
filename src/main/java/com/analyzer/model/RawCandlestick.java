@@ -94,7 +94,6 @@ public class RawCandlestick implements Persistable {
             List<RewardFunction> rewardList = new ArrayList<>();
             rewardList.addAll(Arrays.asList(strategies));
 
-            rewardList.add(rewardFunction);
             boolean alreadyAdded = false;
             for (RewardFunction oldRewardFunction: rewardList) {
                 if (oldRewardFunction.getName().equals(rewardFunction.getName())) {

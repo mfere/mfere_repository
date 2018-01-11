@@ -106,6 +106,11 @@ class IndicatorFactory {
             // SMA 5
             case SMA_5_RAW:
                 return indicators.get(IndicatorValue.SMA_5_RAW).getValue(candleId).toDouble();
+            case SMA_5_CLOSE_ABOVE_OR_BELOW:
+                return closeAboveOrBelow(
+                        indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_5_RAW), candleId);
+            case SMA_5_UPWARD_OR_DOWNWARD:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.SMA_5_RAW), candleId, 5);
             case SMA_5_IS_CLOSE_ABOVE:
                 return isClosedAbove(
                         indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_5_RAW), candleId);
@@ -122,6 +127,11 @@ class IndicatorFactory {
             // SMA 10
             case SMA_10_RAW:
                 return indicators.get(IndicatorValue.SMA_10_RAW).getValue(candleId).toDouble();
+            case SMA_10_CLOSE_ABOVE_OR_BELOW:
+                return closeAboveOrBelow(
+                        indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_10_RAW), candleId);
+            case SMA_10_UPWARD_OR_DOWNWARD:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.SMA_10_RAW), candleId, 10);
             case SMA_10_IS_CLOSE_ABOVE:
                 return isClosedAbove(
                         indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_10_RAW), candleId);
@@ -139,6 +149,11 @@ class IndicatorFactory {
             // SMA 50
             case SMA_50_RAW:
                 return indicators.get(IndicatorValue.SMA_50_RAW).getValue(candleId).toDouble();
+            case SMA_50_CLOSE_ABOVE_OR_BELOW:
+                return closeAboveOrBelow(
+                        indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_50_RAW), candleId);
+            case SMA_50_UPWARD_OR_DOWNWARD:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.SMA_50_RAW), candleId, 50);
             case SMA_50_IS_CLOSE_ABOVE:
                 return isClosedAbove(
                         indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_50_RAW), candleId);
@@ -156,6 +171,11 @@ class IndicatorFactory {
             // SMA 100
             case SMA_100_RAW:
                 return indicators.get(IndicatorValue.SMA_100_RAW).getValue(candleId).toDouble();
+            case SMA_100_CLOSE_ABOVE_OR_BELOW:
+                return closeAboveOrBelow(
+                        indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_50_RAW), candleId);
+            case SMA_100_UPWARD_OR_DOWNWARD:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.SMA_50_RAW), candleId, 100);
             case SMA_100_IS_CLOSE_ABOVE:
                 return isClosedAbove(
                         indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_50_RAW), candleId);
@@ -172,6 +192,11 @@ class IndicatorFactory {
             // SMA 200
             case SMA_200_RAW:
                 return indicators.get(IndicatorValue.SMA_200_RAW).getValue(candleId).toDouble();
+            case SMA_200_CLOSE_ABOVE_OR_BELOW:
+                return closeAboveOrBelow(
+                        indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_50_RAW), candleId);
+            case SMA_200_UPWARD_OR_DOWNWARD:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.SMA_50_RAW), candleId, 200);
             case SMA_200_IS_CLOSE_ABOVE:
                 return isClosedAbove(
                         indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.SMA_50_RAW), candleId);
@@ -189,6 +214,9 @@ class IndicatorFactory {
             // MACD
             case MACD_RAW:
                 return indicators.get(IndicatorValue.MACD_RAW).getValue(candleId).toDouble();
+            case MACD_div_positive_or_negative:
+                return indicators.get(IndicatorValue.MACD_RAW).getValue(candleId).isGreaterThanOrEqual(Decimal.ZERO) ?
+                        TrainingValue.POSITIVE.getValue() : TrainingValue.NEGATIVE.getValue();
             case MACD_IS_DIV_POSITIVE:
                 return indicators.get(IndicatorValue.MACD_RAW).getValue(candleId).isGreaterThan(Decimal.ZERO) ?
                         TrainingValue.INDICATOR_EXIST.getValue() : TrainingValue.INDICATOR_NOT_EXIST.getValue();
@@ -199,6 +227,10 @@ class IndicatorFactory {
             //RSI
             case RSI_RAW:
                 return  indicators.get(IndicatorValue.RSI_RAW).getValue(candleId).toDouble();
+            case RSI_OVER_BROUGHT_OR_SOLD:
+                return overBroughtOrSold(indicators.get(IndicatorValue.RSI_RAW), candleId, 80, 20);
+            case RSI_UPWARD_OR_DOWNWARD_SLOPING:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.RSI_RAW), candleId, 14);
             case RSI_IS_OVER_BROUGHT:
                 return isOverBrought(indicators.get(IndicatorValue.RSI_RAW), candleId, 80);
             case RSI_IS_OVER_SOLD:
@@ -209,6 +241,16 @@ class IndicatorFactory {
                 return isDownwardSloping(indicators.get(IndicatorValue.RSI_RAW), candleId, 5);
 
             // BOLLING BAND
+            case BOLLINGER_BAND_EXPANDING_OR_CONTRACTING:
+                boolean upperUpwardMoving = upwardOrDownwardSloping(indicators.get(IndicatorValue.BOLLINGER_BAND_UPPER_RAW),
+                        candleId, 5) == TrainingValue.UPWARD.getValue();
+                boolean lowerUpwardMoving = upwardOrDownwardSloping(indicators.get(IndicatorValue.BOLLINGER_BAND_LOWER_RAW),
+                        candleId, 5) == TrainingValue.DOWNWARD.getValue();
+                return upperUpwardMoving && lowerUpwardMoving ? TrainingValue.EXPANDING.getValue() : TrainingValue.CONTRACTING.getValue();
+            case BOLLINGER_BAND_UPPER_CLOSE_ABOVE_OR_BELOW:
+                return closeAboveOrBelow(indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.BOLLINGER_BAND_UPPER_RAW), candleId);
+            case BOLLINGER_BAND_LOWER_CLOSE_ABOVE_OR_BELOW:
+                return closeAboveOrBelow(indicators.get(IndicatorValue.CLOSE_PRICE_RAW), indicators.get(IndicatorValue.BOLLINGER_BAND_LOWER_RAW), candleId);
             case BOLLINGER_BAND_IS_EXPANDING:
                 boolean isUpperUpwardMoving = isUpwardSloping(indicators.get(IndicatorValue.BOLLINGER_BAND_UPPER_RAW),
                         candleId, 5) == TrainingValue.INDICATOR_EXIST.getValue();
@@ -241,6 +283,21 @@ class IndicatorFactory {
                 return difference(indicators.get(IndicatorValue.BOLLINGER_BAND_MIDDLE_RAW), indicators.get(IndicatorValue.CLOSE_PRICE_RAW), candleId);
 
             // stochastic oscillator
+            case STOCHASTIC_OSCILLATOR_K_ABOVE_OR_BELOW_D:
+                return closeAboveOrBelow(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_K_RAW),
+                        indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_D_RAW), candleId);
+            case STOCHASTIC_OSCILLATOR_KD_OVER_BROUGHT_OR_SOLD:
+                Double kOver = overBroughtOrSold(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_K_RAW), candleId, 80, 20);
+                Double dOver = overBroughtOrSold(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_D_RAW), candleId, 80, 20);
+                if (TrainingValue.OVER_BROUGHT.getValue() == kOver && TrainingValue.OVER_BROUGHT.getValue() == dOver)
+                    return TrainingValue.OVER_BROUGHT.getValue();
+                if (TrainingValue.OVER_SOLD.getValue() == kOver && TrainingValue.OVER_SOLD.getValue() == dOver)
+                    return TrainingValue.OVER_SOLD.getValue();
+                return TrainingValue.INDICATOR_NOT_EXIST.getValue();
+            case STOCHASTIC_OSCILLATOR_K_UPWARD_OR_DOWNWARD_SLOPING:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_K_RAW), candleId, 5);
+            case STOCHASTIC_OSCILLATOR_D_UPWARD_OR_DOWNWARD_SLOPING:
+                return upwardOrDownwardSloping(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_D_RAW), candleId, 3);
             case STOCHASTIC_OSCILLATOR_K_ABOVE_D:
                 return isClosedAbove(indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_K_RAW),
                         indicators.get(IndicatorValue.STOCHASTIC_OSCILLATOR_D_RAW), candleId);
@@ -279,6 +336,79 @@ class IndicatorFactory {
                 log.info("fail to get indicator value : " + indicatorValue.getName());
                 return null;
         }
+    }
+
+    /**
+     * check if first indicator is close above or below the second indicator
+     *
+     * @param firstIndicator
+     * @param secondIndicator
+     * @param candleId
+     * @return
+     */
+    private Double closeAboveOrBelow(Indicator<Decimal> firstIndicator, Indicator<Decimal> secondIndicator, int candleId) {
+        if (firstIndicator.getValue(candleId).isGreaterThanOrEqual(secondIndicator.getValue(candleId))) {
+            return TrainingValue.CLOSE_ABOVE.getValue();
+        }
+        return TrainingValue.CLOSE_BELOW.getValue();
+    }
+
+    /**
+     * check if the indicator is upward sloping or downward sloping.
+     * calculate by least squares and determined by slope
+     * @param candleId
+     * @param timeFrame
+     * @return
+     */
+    private Double upwardOrDownwardSloping(Indicator<Decimal> indicator, int candleId, int timeFrame) {
+        int startIndex = Math.max(0, candleId - timeFrame + 1);
+        int endIndex = candleId;
+        if (candleId - startIndex + 1 < 2) {
+            // Not enough candle to compute a regression line. i.e. only 1 candle
+            log.info("Not enough candle to compute a regression line for candle " + candleId);
+            return 0d;
+        }
+
+        // linear regression parameters
+        Decimal slope;
+
+        // compute xBar and yBar
+        Decimal sumX = Decimal.ZERO;
+        Decimal sumY = Decimal.ZERO;
+        for (int i = startIndex; i <= endIndex; i++) {
+            sumX = sumX.plus(Decimal.valueOf(i));
+            sumY = sumY.plus(indicator.getValue(i));
+        }
+        Decimal nbObservations = Decimal.valueOf(endIndex - startIndex + 1);
+        Decimal xBar = sumX.dividedBy(nbObservations);
+        Decimal yBar = sumY.dividedBy(nbObservations);
+
+        // compute slope
+        Decimal xxBar = Decimal.ZERO;
+        Decimal xyBar = Decimal.ZERO;
+        for (int i = startIndex; i <= endIndex; i++) {
+            Decimal dX = Decimal.valueOf(i).minus(xBar);
+            Decimal dY = indicator.getValue(i).minus(yBar);
+            xxBar = xxBar.plus(dX.multipliedBy(dX));
+            xyBar = xyBar.plus(dX.multipliedBy(dY));
+        }
+
+        // if slope +ve --> upward sloping
+        slope = xyBar.dividedBy(xxBar);
+        if (slope.isGreaterThanOrEqual(Decimal.ZERO))
+            return TrainingValue.UPWARD.getValue();
+        return TrainingValue.DOWNWARD.getValue();
+    }
+
+    private Double overBroughtOrSold(Indicator<Decimal> indicator, int candleId, int overBroughValue, int overSoldValue) {
+        // indicator is in over brought area
+        if (indicator.getValue(candleId).isGreaterThan(Decimal.valueOf(overBroughValue))) {
+            return TrainingValue.OVER_BROUGHT.getValue();
+            // indicator is in over sold area
+        } else if (indicator.getValue(candleId).isLessThan(Decimal.valueOf(overSoldValue))) {
+            return TrainingValue.OVER_SOLD.getValue();
+        }
+        return TrainingValue.INDICATOR_NOT_EXIST.getValue();
     }
 
     /**
