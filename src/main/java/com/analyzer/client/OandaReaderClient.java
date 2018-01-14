@@ -1,10 +1,8 @@
 package com.analyzer.client;
 
 import com.analyzer.constants.GranularityValue;
-import com.analyzer.reader.ReadRequestForm;
-import com.analyzer.reader.ReaderUtil;
+import com.analyzer.constants.InstrumentValue;
 import com.oanda.v20.Context;
-import com.oanda.v20.account.AccountID;
 import com.oanda.v20.instrument.Candlestick;
 import com.oanda.v20.instrument.InstrumentCandlesRequest;
 import com.oanda.v20.instrument.InstrumentCandlesResponse;
@@ -23,42 +21,37 @@ import java.util.List;
 import static java.lang.Thread.sleep;
 
 @Service
-public class OandaClient {
+public class OandaReaderClient {
 
-    private static final Logger log = LoggerFactory.getLogger(OandaClient.class);
+    private static final Logger log = LoggerFactory.getLogger(OandaReaderClient.class);
 
     private static final int MAX_RECORD_COUNT = 4000;
 
     private final Context ctx;
-    private final AccountID accountID;
 
     @Autowired
-    public OandaClient(
+    public OandaReaderClient(
             @Value("${oanda.url}") String url,
-            @Value("${oanda.token}") String token,
-            @Value("${oanda.account_id}") String accountId
+            @Value("${oanda.token}") String token
     ) {
         // See http://developer.oanda.com/rest-live-v20/instrument-ep/
         ctx = new Context(url, token);
-        accountID = new AccountID(accountId);
     }
 
 
     public List<Candlestick> getInstrumentCandles(
-            ReadRequestForm readRequestForm, String granularity) throws Exception {
+            Instant fromDate,
+            Instant toDate,
+            GranularityValue granularity,
+            InstrumentValue instrument) throws Exception {
 
         List<Candlestick> candlesticks = new ArrayList<>();
         boolean keepRead = true;
         Instant lastDate = null;
 
-        if (readRequestForm.getFromDate() == null){
-            throw new Exception("From date cannot be null");
-        }
-        Instant fromDate = ReaderUtil.parse(readRequestForm.getFromDate(), ReadRequestForm.DATE_TIME_PATTERN);
-        Instant toDate = readRequestForm.getToDate() == null ? null :
-                ReaderUtil.parse(readRequestForm.getToDate(), ReadRequestForm.DATE_TIME_PATTERN);
-        InstrumentCandlesRequest request = new InstrumentCandlesRequest(
-                new InstrumentName(readRequestForm.getInstrument()));
+
+                InstrumentCandlesRequest request = new InstrumentCandlesRequest(
+                new InstrumentName(instrument.name()));
 
         while (keepRead) {
             if (fromDate != null) {
@@ -68,22 +61,19 @@ public class OandaClient {
                 request.setTo(new DateTime(toDate.toString()));
             }
 
-            GranularityValue granularityValue = GranularityValue.getGranularityValue(granularity);
-            if (granularityValue == null){
-                throw new Exception("Invalid granularity: "+ granularity);
-            }
-            request.setGranularity(granularityValue.getGranularity());
+            request.setGranularity(granularity.getOandaGranularity());
             request.setIncludeFirst(true);
             request.setSmooth(false);
             request.setDailyAlignment(0);
             request.setAlignmentTimezone("UTC");
-            request.setPrice(readRequestForm.getPrice());
+            request.setPrice("ABM");
             request.setCount(MAX_RECORD_COUNT);
             log.info("Starting read using parameters: "
                     + ", fromDate: " + fromDate
                     + ", toDate: " + toDate
-                    + ", granularity: " + granularityValue.getGranularity()
-                    + ", instrument: " + readRequestForm.getInstrument());
+                    + ", price: " + "ABM"
+                    + ", granularity: " + granularity.name()
+                    + ", instrument: " + instrument.name());
             InstrumentCandlesResponse response = ctx.instrument.candles(request);
             if (response.getCandles() == null) {
                 throw new Exception("No candles found in selected period");

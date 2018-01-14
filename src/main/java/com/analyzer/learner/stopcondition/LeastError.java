@@ -27,19 +27,19 @@ public class LeastError implements StopCondition {
     public boolean isConditionMet() {
         if (leastError == null) {
             leastError = model.score();
-            log.info("Found new least error model: " + leastError);
+            log.info("Found new least error models: " + leastError);
         } else {
             if (model.score() < leastError) {
                 leastError = model.score();
                 iterationNumber = 0;
                 bestConfiguration = model;
-                log.info("Found new least error model: " + leastError);
+                log.info("Found new least error models: " + leastError);
             } else {
                 iterationNumber ++;
             }
         }
         if (iterationNumber >= maxNoChangeIteration) {
-            log.info("Finishing using model with score: "+model.score());
+            log.info("Finishing using models with score: "+bestConfiguration.score());
             return true;
         }
         return false;

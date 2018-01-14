@@ -11,16 +11,17 @@ import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReadRequestForm;
 import com.analyzer.reader.ReaderUtil;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.ta4j.core.TimeSeries;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
 import javax.validation.Valid;
+import java.text.ParseException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,47 +47,38 @@ public class EnricherController {
 
         RawCandlestick rawCandlestick;
         try {
-            GranularityValue granularity = GranularityValue.getGranularityValue(
+            GranularityValue granularity = GranularityValue.valueOf(
                     enrichRequestForm.getGranularity());
-            InstrumentValue instrument = InstrumentValue.getInstrumentValue(
+            InstrumentValue instrument = InstrumentValue.valueOf(
                     enrichRequestForm.getInstrument());
-            rawCandlestick = rawCandlestickRepository.findOne(
-                    ReaderUtil.parse(enrichRequestForm.getFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    granularity,
-                    instrument);
+            Instant fromDate = ReaderUtil.parse(enrichRequestForm.getFromDate(),ReadRequestForm.DATE_TIME_PATTERN);
+            Instant toDate = ReaderUtil.parse(enrichRequestForm.getToDate(),ReadRequestForm.DATE_TIME_PATTERN);
 
-            List<RawCandlestick> rawCandlestickList = new ArrayList<>();
-            while (rawCandlestick.getNextDateTime() != null &&
-                    !rawCandlestick.getNextDateTime().isAfter(
-                            ReaderUtil.parse(enrichRequestForm.getToDate(),ReadRequestForm.DATE_TIME_PATTERN)
-                    )){
-                rawCandlestickList.add(rawCandlestick);
-                rawCandlestick = rawCandlestickRepository.findOne(
-                        rawCandlestick.getNextDateTime(),
-                        granularity,
-                        instrument);
-            }
+            List<RawCandlestick> rawCandlestickList = ReaderUtil.getRawCandlesticks(
+                    fromDate, toDate,
+                    granularity, instrument,
+                    rawCandlestickRepository);
 
             // initial all necessary indicators in IndicatorFactory
             List<IndicatorValue> indicatorList = new ArrayList<>();
             for (String indicatorName : enrichRequestForm.getIndicators()) {
-                indicatorList.add(IndicatorValue.getIndicatorValue(indicatorName));
+                indicatorList.add(IndicatorValue.valueOf(indicatorName));
             }
             IndicatorFactory indicatorFactory = new IndicatorFactory(rawCandlestickList);
 
-            // set value for each candles' indicator
+            // set value for each candles indicator
             for (int i = 0; i < rawCandlestickList.size(); i++){
                 rawCandlestick = rawCandlestickList.get(i);
                 for (IndicatorValue indicatorName : indicatorList) {
                     rawCandlestick.addIndicator(
-                            new FxIndicator(indicatorName.getName(), indicatorFactory.getIndicatorValue(indicatorName, i))
+                            new FxIndicator(indicatorName.name(), indicatorFactory.getIndicatorValue(indicatorName, i))
                     );
                 }
             }
 
             for (String rewardFunctionName : enrichRequestForm.getRewardFunctions()) {
                 RewardFunctionBuilder rewardFunctionBuilder = RewardFunctionFactory.getRewardFunction(
-                        RewardFunctionValue.getRewardFunctionValue(rewardFunctionName),
+                        RewardFunctionValue.valueOf(rewardFunctionName),
                         rawCandlestickRepository);
                 if (rewardFunctionBuilder == null) {
                     log.info("No reward builder found");
@@ -107,4 +99,6 @@ public class EnricherController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 }

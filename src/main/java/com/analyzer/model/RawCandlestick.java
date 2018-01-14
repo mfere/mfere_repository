@@ -58,8 +58,8 @@ public class RawCandlestick implements Persistable {
         this.nextDateTime = nextCandlestick != null ? Instant.parse(nextCandlestick.getTime()) : null;
         this.rawCandlestickKey = new RawCandlestickKey(
                 Instant.parse(candlestick.getTime()),
-                granularity.getName(),
-                instrumentValue.getName());
+                granularity.name(),
+                instrumentValue.name());
     }
 
     public void addIndicator(FxIndicator indicator){
@@ -121,7 +121,7 @@ public class RawCandlestick implements Persistable {
 
         if (strategies != null) {
             for (RewardFunction rewardFunction : strategies) {
-                if (rewardFunction.getName().equals(rewardFunctionValue.getName())) {
+                if (rewardFunction.getName().equals(rewardFunctionValue.name())) {
                     stringBuilder.append(rewardFunction.getValue());
                     found = true;
                     if (testConvergence) {
@@ -133,7 +133,7 @@ public class RawCandlestick implements Persistable {
 
             }
             if (!found) {
-                throw new Exception("Reward function ("+rewardFunctionValue.getName()+") " +
+                throw new Exception("Reward function ("+rewardFunctionValue.name()+") " +
                         "value not found for instant " + getRawCandlestickKey().getDateTime().toString());
             }
         } else {
@@ -158,7 +158,7 @@ public class RawCandlestick implements Persistable {
             for (IndicatorValue indicatorValue : indicatorValues) {
                 found = false;
                 for (FxIndicator indicator : fxIndicators) {
-                    if (indicator.getName().equals(indicatorValue.getName())) {
+                    if (indicator.getName().equalsIgnoreCase(indicatorValue.name())) {
                         stringBuilder.append(",");
                         stringBuilder.append(indicator.getValue());
                         found = true;
@@ -166,7 +166,7 @@ public class RawCandlestick implements Persistable {
                     }
                 }
                 if (!found) {
-                    throw new Exception("Indicator ("+indicatorValue.getName()+") "
+                    throw new Exception("Indicator ("+indicatorValue.name()+") "
                             + "value not found for instant " + getRawCandlestickKey().getDateTime().toString());
                 }
             }

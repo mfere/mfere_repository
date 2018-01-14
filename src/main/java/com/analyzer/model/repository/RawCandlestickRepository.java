@@ -41,9 +41,9 @@ public interface RawCandlestickRepository extends Repository<RawCandlestick, Raw
             String datetime,
             String granularity,
             String instrument) {
-        GranularityValue granularityValue = GranularityValue.getGranularityValue(
+        GranularityValue granularityValue = GranularityValue.valueOf(
                 granularity);
-        InstrumentValue instrumentValue = InstrumentValue.getInstrumentValue(
+        InstrumentValue instrumentValue = InstrumentValue.valueOf(
                 instrument);
         return findOne(
                 Instant.parse(datetime),
@@ -54,7 +54,8 @@ public interface RawCandlestickRepository extends Repository<RawCandlestick, Raw
     default RawCandlestick findOne(Instant datetime,
                                    GranularityValue granularity,
                                    InstrumentValue instrument) {
-        RawCandlestickKey id = new RawCandlestickKey(datetime, granularity.getName(), instrument.getName());
+        RawCandlestickKey id = new RawCandlestickKey(datetime,
+                granularity.name(), instrument.name());
         return findOne(id);
     }
 }

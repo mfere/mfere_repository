@@ -4,7 +4,7 @@ import com.analyzer.constants.GranularityValue;
 import com.analyzer.constants.InstrumentValue;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
-import com.analyzer.client.OandaClient;
+import com.analyzer.client.OandaReaderClient;
 import com.oanda.v20.instrument.Candlestick;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,12 +25,12 @@ public class ReaderController {
     private static final Logger log = LoggerFactory.getLogger(ReaderController.class);
 
     private final RawCandlestickRepository rawCandlestickRepository;
-    private final OandaClient oandaClient;
+    private final OandaReaderClient oandaClient;
 
     @Autowired
     ReaderController(
             RawCandlestickRepository rawCandlestickRepository,
-            OandaClient oandaClient) {
+            OandaReaderClient oandaClient) {
         this.rawCandlestickRepository = rawCandlestickRepository;
         this.oandaClient = oandaClient;
     }
@@ -43,51 +43,26 @@ public class ReaderController {
         if (bindingResult.hasErrors()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
         try {
+            InstrumentValue instrument = InstrumentValue.valueOf(
+                    readRequestForm.getInstrument());
+
+            if (readRequestForm.getFromDate() == null){
+                throw new Exception("From date cannot be null");
+            }
+
+            Instant fromDate = ReaderUtil.parse(readRequestForm.getFromDate(), ReadRequestForm.DATE_TIME_PATTERN);
+            Instant toDate = readRequestForm.getToDate() == null ? null :
+                    ReaderUtil.parse(readRequestForm.getToDate(), ReadRequestForm.DATE_TIME_PATTERN);
+
 
             for (String granularityName : readRequestForm.getGranularity()) {
+                GranularityValue granularity = GranularityValue.valueOf(granularityName);
+
                 List<Candlestick> candles = oandaClient.getInstrumentCandles(
-                        readRequestForm, granularityName);
-                Candlestick previous = null;
-                Candlestick next;
-
-                for (int i = 0; i < candles.size(); i++) {
-                    if (i+1 < candles.size()) {
-                        next = candles.get(i+1);
-                    } else {
-                        next = null;
-                    }
-                    GranularityValue granularity = GranularityValue.getGranularityValue(granularityName);
-                    InstrumentValue instrument = InstrumentValue.getInstrumentValue(
-                            readRequestForm.getInstrument());
-
-                    Instant instant = Instant.parse(candles.get(i).getTime());
-
-                    RawCandlestick rawCandlestick = rawCandlestickRepository.findOne(
-                            instant,
-                            granularity,
-                            instrument);
-                    if (rawCandlestick == null) {
-                        rawCandlestick = rawCandlestickRepository.save(
-                                candles.get(i),
-                                granularity,
-                                instrument,
-                                previous, next);
-                        log.info("Saved new value: "+rawCandlestick);
-                    } else if ((rawCandlestick.getNextDateTime() == null && next != null)
-                            || (rawCandlestick.getPrevDateTime() == null && previous != null)) {
-                        if (next != null) {
-                            rawCandlestick.setPrevDateTime(Instant.parse(next.getTime()));
-                        }
-                        if (previous != null) {
-                            rawCandlestick.setPrevDateTime(Instant.parse(previous.getTime()));
-                        }
-                        rawCandlestick = rawCandlestickRepository.save(rawCandlestick);
-                        log.info("Updated value: "+rawCandlestick);
-                    }
-                    previous = candles.get(i);
-                }
+                        fromDate, toDate,
+                        granularity, instrument);
+                ReaderUtil.saveCandles(granularity, instrument, candles, rawCandlestickRepository);
             }
             return new ResponseEntity<>("ok", HttpStatus.OK);
         } catch (Exception e) {
@@ -95,4 +70,6 @@ public class ReaderController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 }

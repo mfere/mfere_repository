@@ -28,8 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.preprocessor.AbstractDataSetNormalizer;
+import org.nd4j.linalg.dataset.api.preprocessor.AbstractNormalizer;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
+import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,17 +79,11 @@ public class LearnerController {
         FileWriter writer = null;
         PrintWriter printWriter = null;
         try {
-            GranularityValue granularity = GranularityValue.getGranularityValue(
+            GranularityValue granularity = GranularityValue.valueOf(
                     learnerRequestForm.getGranularity());
-            if (granularity == null) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            InstrumentValue instrument = InstrumentValue.getInstrumentValue(
+            InstrumentValue instrument = InstrumentValue.valueOf(
                     learnerRequestForm.getInstrument());
-            if (instrument == null) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            RewardFunctionValue rewardFunction = RewardFunctionValue.getRewardFunctionValue(
+            RewardFunctionValue rewardFunction = RewardFunctionValue.valueOf(
                     learnerRequestForm.getRewardFunction());
             if (rewardFunction == null) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -175,19 +172,15 @@ public class LearnerController {
 
             // Normalize test data in range 0-1 for more accurate scoring
             //NormalizerStandardize trainNormalizer = new NormalizerStandardize();
-            NormalizerMinMaxScaler trainNormalizer = new NormalizerMinMaxScaler();
-            trainNormalizer.fitLabel(true);
-            trainNormalizer.fit(trainIterator);
-            trainIterator.setPreProcessor(trainNormalizer);
-
-            // Normalize train data in range 0-1 for better learning
-             NormalizerStandardize testNormalizer = new NormalizerStandardize();
-            //NormalizerMinMaxScaler testNormalizer = new NormalizerMinMaxScaler();
-            testNormalizer.fitLabel(true);
-            testNormalizer.fit(testIterator);
-            testIterator.setPreProcessor(testNormalizer);
-            //testIterator.setPreProcessor(trainNormalizer);
-
+            AbstractDataSetNormalizer normalizer = NormalizerFactory.getNormalizer(
+                    NormalizerValue.valueOf(learnerRequestForm.getNormalizer()));
+            if (normalizer != null) {
+                normalizer.fitLabel(true);
+                normalizer.fit(trainIterator);
+                trainIterator.setPreProcessor(normalizer);
+                // Test and train use same normalizer
+                testIterator.setPreProcessor(normalizer);
+            }
 
             MultiLayerConfiguration conf = createMultiLayerConfiguration(learnerRequestForm, numInputs, numOutputs);
 
@@ -215,9 +208,9 @@ public class LearnerController {
                 trainIterator.reset();
             } while (!stopCondition.isConditionMet());
 
-            //ModelSerializer.writeModel(model,this.filePath,true);
+            //ModelSerializer.writeModel(models,this.filePath,true);
             model = stopCondition.getBestConfiguration();
-            log.info("Evaluate train model....");
+            log.info("Evaluate train models....");
             Evaluation eval = new Evaluation(numOutputs);
             while(trainIterator.hasNext()){
                 DataSet t = trainIterator.next();
@@ -229,7 +222,7 @@ public class LearnerController {
             //Print the evaluation statistics
             log.info(eval.stats());
 
-            log.info("Evaluate test model....");
+            log.info("Evaluate test models....");
             eval = new Evaluation(numOutputs);
             while(testIterator.hasNext()){
                 DataSet t = testIterator.next();
@@ -241,16 +234,24 @@ public class LearnerController {
             // Print the evaluation statistics
             log.info(eval.stats());
 
-            // Save the model
+            // Save the models
             int score = (int) (eval.f1()*10000);
-            String filePath = trainedNetworksPath+"/"+learnerRequestForm.getName()+"_"+score+".model";
-            ModelSerializer.writeModel(model, filePath,true);
-
+            String filePath = trainedNetworksPath+"/"+learnerRequestForm.getName()+"_"+score;
+            ModelSerializer.writeModel(model, filePath + ".models",true);
+            if (normalizer != null) {
+                // Save the normalizer
+                // Now we want to save the normalizer to a binary file. For doing this, one can use the NormalizerSerializer.
+                NormalizerSerializer serializer = NormalizerSerializer.getDefault();
+                serializer.write(normalizer, filePath + ".normalizer");
+            }
             return new ResponseEntity<>("ok", HttpStatus.OK);
-    } catch (Exception e) {
-        e.printStackTrace();
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    } finally {
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
             if (printWriter != null) {
                 printWriter.close();
             }
@@ -308,9 +309,9 @@ public class LearnerController {
                 instrument);
         List<IndicatorValue> indicatorValues = new ArrayList<>();
         for (String indicatorName : learnerRequestForm.getIndicators()) {
-            indicatorValues.add(IndicatorValue.getIndicatorValue(indicatorName));
+            indicatorValues.add(IndicatorValue.valueOf(indicatorName));
         }
-        RewardFunctionValue rewardFunctionValue = RewardFunctionValue.getRewardFunctionValue(
+        RewardFunctionValue rewardFunctionValue = RewardFunctionValue.valueOf(
                 learnerRequestForm.getRewardFunction());
         printWriter.println(rawCandlestick.toCsvLine(rewardFunctionValue, indicatorValues,
                 learnerRequestForm.getTestConvergance() != null ? learnerRequestForm.getTestConvergance() : false));

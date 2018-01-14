@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class IndicatorFactory {
+public class IndicatorFactory {
 
     private static final Logger log = LoggerFactory.getLogger(IndicatorFactory.class);
 
@@ -36,7 +36,7 @@ class IndicatorFactory {
     private Map<IndicatorValue, Indicator<Boolean>> candlesIndicator = new HashMap<>();
     private List<RawCandlestick> rawCandlestickList;
 
-    IndicatorFactory(List<RawCandlestick> rawCandlestickList) {
+    public IndicatorFactory(List<RawCandlestick> rawCandlestickList) {
         this.rawCandlestickList = rawCandlestickList;
         TimeSeries timeSeries = TimeSeriesLoader.loadTimeSeries(rawCandlestickList);
 
@@ -333,7 +333,7 @@ class IndicatorFactory {
             case IS_YESTERDAY_HOLIDAY:
                 return isYesterdayHoliday(candleId);
             default:
-                log.info("fail to get indicator value : " + indicatorValue.getName());
+                log.info("fail to get indicator value : " + indicatorValue.name());
                 return null;
         }
     }

@@ -6,7 +6,6 @@ import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 
 @AllArgsConstructor
-@Getter
 public enum IndicatorValue {
     CLOSE_PRICE_RAW("close_price_raw"),
     VOLUME_RAW("volume"),
@@ -129,18 +128,4 @@ public enum IndicatorValue {
 
     String name;
 
-    /**
-     * convert Indicator name to exact value
-     *
-     * @param name: name of Indicator
-     * @return a IndicatorValue
-     */
-    public static IndicatorValue getIndicatorValue(String name) {
-        for (IndicatorValue value : IndicatorValue.values()) {
-            if (value.getName().equals(name)) {
-                return value;
-            }
-        }
-        return null;
-    }
 }

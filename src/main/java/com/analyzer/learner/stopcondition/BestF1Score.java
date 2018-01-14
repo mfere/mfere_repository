@@ -54,16 +54,16 @@ public class BestF1Score implements StopCondition {
         }
         if (this.bestScore == null) {
             this.bestScore = eval.f1() > 0 ? eval.f1() : null;
-            log.info("Found new best f1score model: " + this.bestScore);
+            log.info("Found new best f1score models: " + this.bestScore);
             bestConfiguration = model.clone();
         } else {
             if (eval.f1() > this.bestScore) {
                 this.bestScore = eval.f1();
-                log.info("Found new best f1score model: " + this.bestScore);
+                log.info("Found new best f1score models: " + this.bestScore);
             } else {
                 noChangeIterationNumber++;
                 if (noChangeIterationNumber == maxNoChangeIteration) {
-                    log.info("Finishing using model with f1score: " + eval.f1());
+                    log.info("Finishing using models with f1score: " + eval.f1());
                     return true;
                 }
             }
