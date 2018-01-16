@@ -1,5 +1,6 @@
 package com.analyzer.constants;
 
+import com.oanda.v20.primitives.InstrumentName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -7,9 +8,11 @@ import lombok.Getter;
 @Getter
 public enum InstrumentValue {
 
-    EUR_USD,
-    GBP_USD,
-    USD_CHF,
-    USD_JPY;
+    EUR_USD(new InstrumentName("EUR/USD")),
+    GBP_USD(new InstrumentName("GBP/USD")),
+    USD_CHF(new InstrumentName("USD/CHF")),
+    USD_JPY(new InstrumentName("USD/JPY"));
+
+    public InstrumentName instrumentName;
 
 }

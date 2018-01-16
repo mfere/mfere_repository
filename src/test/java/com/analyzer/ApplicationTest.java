@@ -204,7 +204,7 @@ public class ApplicationTest {
 		form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
 		form.setLearningRate(0.001);
 		form.setNormalizer(NormalizerValue.MIN_MAX.name());
-        form.setStopCondition(StopConditionValue.LEAST_ERROR_LAST_100.name());
+        form.setStopCondition(StopConditionValue.FIXED_EPOC_LENGTH_500.name());
 		List<String> indicators = new ArrayList<>();
 		indicators.add(IndicatorValue.BULLISH_ENGULFING_CANDLE.name());
 		indicators.add(IndicatorValue.BEARISH_ENGULFING_CANDLE.name());
@@ -237,7 +237,7 @@ public class ApplicationTest {
 		//indicators.add(IndicatorValue.IS_TOMORROW_HOLIDAY.name());
 
 		form.setIndicators(indicators);
-		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_005_24.name());
+		form.setRewardFunction(RewardFunctionValue.BS_TAKE_PROFIT_001_24.name());
 		form.setTestConvergance(false);
 
 		ResponseEntity<String> response = template.postForEntity(

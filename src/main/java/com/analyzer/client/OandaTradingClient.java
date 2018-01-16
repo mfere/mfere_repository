@@ -1,9 +1,23 @@
 package com.analyzer.client;
 
+import com.analyzer.constants.InstrumentValue;
+import com.analyzer.enricher.rewardfunction.RewardFunctionBuilder;
 import com.oanda.v20.Context;
+import com.oanda.v20.account.*;
+import com.oanda.v20.order.MarketOrderRequest;
+import com.oanda.v20.order.OrderCreateRequest;
+import com.oanda.v20.order.OrderCreateResponse;
+import com.oanda.v20.primitives.InstrumentName;
+import com.oanda.v20.trade.TradeCloseRequest;
+import com.oanda.v20.trade.TradeCloseResponse;
+import com.oanda.v20.trade.TradeSpecifier;
+import com.oanda.v20.transaction.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.util.List;
+
 
 public class OandaTradingClient {
 
@@ -11,14 +25,91 @@ public class OandaTradingClient {
 
 
     private final Context ctx;
+    private final AccountID accountID;
+    private double balance;
 
     public OandaTradingClient(
-            @Value("${oanda.url}") String url,
-            @Value("${oanda.token}") String token,
-            String accountId
-
+            String url,
+            String token,
+            String accountIdValue
     ) {
         // See http://developer.oanda.com/rest-live-v20/instrument-ep/
         ctx = new Context(url, token);
+        accountID = new AccountID(accountIdValue);
+
+        // Make sure we have a valid account
+        try {
+            // Execute the request and obtain a response object
+            AccountListResponse response = ctx.account.list();
+            // Retrieve account list from response object
+            List<AccountProperties> accountProperties;
+            accountProperties = response.getAccounts();
+            // Check for the configured account
+            boolean hasAccount = false;
+            for (AccountProperties account : accountProperties) {
+                if (account.getId().equals(accountID))
+                    hasAccount = true;
+            }
+            if (!hasAccount)
+                throw new Exception("Account "+accountID+" not found");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // Make sure the account has a non zero balance
+        try {
+            // Execute the request and retrieve a response object
+            AccountGetResponse response = ctx.account.get(accountID);
+            // Retrieve the contents of the result
+            Account account;
+            account = response.getAccount();
+            // Check the balance
+            balance = account.getBalance().doubleValue();
+            if (balance <= 0.0) {
+                throw new Exception("Account " + accountID + " balance " + balance + " <= 0.0");
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
+
+    public String sell(InstrumentValue instrumentValue, RewardFunctionBuilder rewardFunctionBuilder, int amount) {
+        return buy(instrumentValue, rewardFunctionBuilder, -amount);
+    }
+
+    public String buy(InstrumentValue instrumentValue, RewardFunctionBuilder rewardFunctionBuilder, int amount) {
+        InstrumentName instrument = instrumentValue.getInstrumentName();
+
+        System.out.println("Place a Market Order");
+        TransactionID tradeId;
+        try {
+            // Create the new request
+            OrderCreateRequest request = new OrderCreateRequest(accountID);
+            // Create the required body parameter
+            MarketOrderRequest marketOrderRequest = new MarketOrderRequest();
+            // Populate the body parameter fields
+            marketOrderRequest.setInstrument(instrument);
+            marketOrderRequest.setUnits(amount);
+            StopLossDetails stopLossDetails = new StopLossDetails();
+            // TODO Find price based on current price and rewardFunctionBuilder
+            stopLossDetails.setPrice(1500);
+            TakeProfitDetails takeProfitDetails = new TakeProfitDetails();
+            takeProfitDetails.setPrice(500);
+            marketOrderRequest.setStopLossOnFill(stopLossDetails);
+            marketOrderRequest.setTakeProfitOnFill(takeProfitDetails);
+            // Attach the body parameter to the request
+            request.setOrder(marketOrderRequest);
+            // Execute the request and obtain the response object
+            OrderCreateResponse response = ctx.order.create(request);
+            // Extract the Order Fill transaction for the executed Market Order
+            OrderFillTransaction transaction = response.getOrderFillTransaction();
+            // Extract the trade ID of the created trade from the transaction and keep it for future action
+            return transaction.getId().toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
 }

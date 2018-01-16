@@ -244,6 +244,13 @@ public class LearnerController {
                 NormalizerSerializer serializer = NormalizerSerializer.getDefault();
                 serializer.write(normalizer, filePath + ".normalizer");
             }
+
+            // Save the used indicators
+            FileOutputStream fos = new FileOutputStream(filePath + ".ind");
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(learnerRequestForm.getIndicators());
+            oos.close();
+
             return new ResponseEntity<>("ok", HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();

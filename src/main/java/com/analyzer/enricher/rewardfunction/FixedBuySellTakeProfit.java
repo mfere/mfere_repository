@@ -2,6 +2,7 @@ package com.analyzer.enricher.rewardfunction;
 
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 public class FixedBuySellTakeProfit extends FixedTakeProfit {
 
@@ -12,19 +13,25 @@ public class FixedBuySellTakeProfit extends FixedTakeProfit {
         super(rawCandlestickRepository, name, interval, distance);
     }
 
-    protected Label chooseLabel(RawCandlestick nextCandlestick,
-                                double buyValue,
-                                double sellValue){
+    protected Action chooseLabel(RawCandlestick nextCandlestick,
+                                 double buyValue,
+                                 double sellValue){
         if (nextCandlestick.getMidRawCandlestickData().getHigh() >= buyValue &&
                 nextCandlestick.getMidRawCandlestickData().getLow() <= sellValue) {
-            return Label.BOTH;
+            return Action.BOTH;
         } else if (nextCandlestick.getMidRawCandlestickData().getHigh() >= buyValue) {
-            return Label.BUY;
+            return Action.BUY;
         } else if (nextCandlestick.getMidRawCandlestickData().getLow() <= sellValue) {
-            return Label.SELL;
+            return Action.SELL;
         } else {
-            return Label.NOTHING;
+            return Action.NOTHING;
         }
+    }
+
+    @Override
+    public Action getAction(INDArray prediction) {
+        return prediction.getDouble(2) > PROBABILITY_THRESHOLD ? Action.SELL :
+                prediction.getDouble(3) > PROBABILITY_THRESHOLD ? Action.BUY : Action.NOTHING;
     }
 
 }

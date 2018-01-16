@@ -1,21 +1,29 @@
 package com.analyzer.trader;
 
 import com.analyzer.client.OandaReaderClient;
+import com.analyzer.client.OandaTradingClient;
 import com.analyzer.constants.GranularityValue;
 import com.analyzer.constants.IndicatorValue;
 import com.analyzer.constants.InstrumentValue;
+import com.analyzer.constants.RewardFunctionValue;
 import com.analyzer.enricher.IndicatorFactory;
+import com.analyzer.enricher.rewardfunction.Action;
+import com.analyzer.enricher.rewardfunction.RewardFunctionBuilder;
+import com.analyzer.enricher.rewardfunction.RewardFunctionFactory;
 import com.analyzer.learner.LearnerController;
 import com.analyzer.model.FxIndicator;
 import com.analyzer.model.RawCandlestick;
+import com.analyzer.model.RewardFunction;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReaderUtil;
 import com.oanda.v20.instrument.Candlestick;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
-import org.nd4j.linalg.dataset.api.preprocessor.Normalizer;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.api.preprocessor.AbstractDataSetNormalizer;
 import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
+import org.nd4j.linalg.factory.Nd4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +32,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
@@ -44,16 +50,23 @@ public class ScheduledTrader {
     private final RawCandlestickRepository rawCandlestickRepository;
     private final OandaReaderClient oandaClient;
 
+    private String url;
+    private String token;
+
     public ScheduledTrader(
             @Value("${trader.configuration.daily}")String dailyTradingPropertiesPath,
+            @Value("${oanda.url}") String url,
+            @Value("${oanda.token}") String token,
             RawCandlestickRepository rawCandlestickRepository,
             OandaReaderClient oandaClient) {
         this.dailyTradingPropertiesPath = dailyTradingPropertiesPath;
         this.rawCandlestickRepository = rawCandlestickRepository;
         this.oandaClient = oandaClient;
+        this.url = url;
+        this.token = token;
     }
 
-    //@Scheduled(cron = "5 0 * * * MON-FRI", zone = "UTC")
+    //@Scheduled(cron = "1 0 * * * MON-FRI", zone = "UTC")
     @Scheduled(cron = "* * * * * *")
     public void reportCurrentTime() throws Exception {
         if (dailyTradingPropertiesPath != null && !"".equals(dailyTradingPropertiesPath)) {
@@ -74,7 +87,7 @@ public class ScheduledTrader {
                 MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(config.getString("model.path"));
 
                 // Create normalizer if needed
-                Normalizer normalizer = null;
+                AbstractDataSetNormalizer normalizer = null;
                 String normalizerPath = config.getString("model.normalizer.path",null);
                 if (normalizerPath != null) {
                     NormalizerSerializer serializer = NormalizerSerializer.getDefault();
@@ -97,17 +110,29 @@ public class ScheduledTrader {
                 // Get latest candlestick and add to db
                 GranularityValue granularity = GranularityValue.D;
                 InstrumentValue instrument = InstrumentValue.valueOf(config.getString("trade.instrument"));
+                RewardFunctionValue rewardFunction = RewardFunctionValue.valueOf(config.getString("trade.reward_function"));
 
                 List<Candlestick> instrumentCandles = oandaClient.getInstrumentCandles(
                         lastCandleInstant, null,
                         granularity, instrument);
                 Candlestick lastCandle = instrumentCandles.get(instrumentCandles.size()-1);
+                if (!lastCandle.getComplete()) {
+                    lastCandle = instrumentCandles.get(instrumentCandles.size()-2);
+                }
+                log.info("Predictiong candle: "+ lastCandle);
+
                 Instant lastInstant = Instant.parse(lastCandle.getTime());
 
                 ReaderUtil.saveCandles(granularity, instrument, instrumentCandles, rawCandlestickRepository);
 
+                // Read indicators to use
+                String indicatorPath = config.getString("model.indicators.path");
+                FileInputStream fis = new FileInputStream(indicatorPath);
+                ObjectInputStream ois = new ObjectInputStream(fis);
+                List<String> indicators = (List<String>) ois.readObject();
+                ois.close();
+
                 // Calculate indicator starting from older date
-                List<IndicatorValue> indicatorList = new ArrayList<>(Arrays.asList(IndicatorValue.values()));
                 List<RawCandlestick> rawCandlestickList = ReaderUtil.getRawCandlesticks(
                         prevInstant, lastInstant,
                         granularity, instrument,
@@ -115,35 +140,48 @@ public class ScheduledTrader {
 
                 IndicatorFactory indicatorFactory = new IndicatorFactory(rawCandlestickList);
                 RawCandlestick rawCandlestick;
+                INDArray input = Nd4j.zeros(indicators.size());
+                int column = 0;
                 for (int i = 0; i < rawCandlestickList.size(); i++){
                     rawCandlestick = rawCandlestickList.get(i);
-                    for (IndicatorValue indicatorName : indicatorList) {
-                        rawCandlestick.addIndicator(
-                                new FxIndicator(indicatorName.name(), indicatorFactory.getIndicatorValue(indicatorName, i))
-                        );
+
+                    for (String indicatorName : indicators) {
+                        FxIndicator indicator = new FxIndicator(indicatorName,
+                                indicatorFactory.getIndicatorValue(IndicatorValue.valueOf(indicatorName), i));
+                        rawCandlestick.addIndicator(indicator);
+                        // If last candlestick, create input array
+                        if (i == rawCandlestickList.size() -1) {
+                            input.putScalar(0,column, indicator.getValue());
+                            column++;
+                        }
                     }
                 }
 
-                // Read file and create csv
-                File tmpTestFile = File.createTempFile("test_"+new Date().getTime(), ".csv");
-                FileWriter writer = new FileWriter(tmpTestFile);
-                PrintWriter printWriter = new PrintWriter(writer);
-
-                rawCandlestick = rawCandlestickRepository.findOne(
-                        lastInstant,
-                        granularity,
-                        instrument);
-
-                log.info("saved test temporary file: "+tmpTestFile.getAbsolutePath());
-
-
-                // Create iterator from csv
-
                 // Normalize iterator if needed
+                if (normalizer != null) {
+                    normalizer.transform(input);
+                }
 
                 // Use model to predict last data
+                INDArray prediction = model.output(input,false);
+                log.info("predicted: " + prediction);
 
-                // Retrieve oanda account data
+                RewardFunctionBuilder rewardFunctionBuilder = RewardFunctionFactory.getRewardFunction(rewardFunction);
+                Action action = rewardFunctionBuilder.getAction(prediction);
+
+
+                if (Action.SELL == action || Action.BUY == action) {
+                    // Retrieve oanda account data
+                    OandaTradingClient client = new OandaTradingClient(url, token, config.getString("trade.oanda.account_id"));
+
+                    String transactionId;
+                    if (Action.SELL == action) {
+                        transactionId = client.sell(instrument, rewardFunctionBuilder, config.getInt("trade.amount"));
+                    } else {
+                        transactionId = client.buy(instrument, rewardFunctionBuilder, config.getInt("trade.amount"));
+                    }
+                    log.info("Created "+transactionId);
+                }
 
                 // Place order based on result and reward function
 
@@ -152,4 +190,5 @@ public class ScheduledTrader {
         }
 
     }
+
 }

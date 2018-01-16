@@ -2,6 +2,7 @@ package com.analyzer.learner.stopcondition;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
+@Deprecated
 public class FixedEpocLength implements StopCondition {
     private int maxLength;
     private int iterationNumber;

@@ -6,6 +6,12 @@ import com.analyzer.model.repository.RawCandlestickRepository;
 import static com.analyzer.constants.RewardFunctionValue.*;
 
 public class RewardFunctionFactory {
+
+    public static RewardFunctionBuilder getRewardFunction(
+            RewardFunctionValue value) {
+        return getRewardFunction(value, null);
+    }
+
     public static RewardFunctionBuilder getRewardFunction(
             RewardFunctionValue value,
             RawCandlestickRepository repository) {

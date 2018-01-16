@@ -569,7 +569,7 @@ public class IndicatorFactory {
      */
     private Double isYesterdayHoliday(int candleId) {
         RawCandlestick currentCandle = rawCandlestickList.get(candleId);
-        LocalDate today = currentCandle.getCurrentDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
+        LocalDate today = currentCandle.getRawCandlestickKey().getDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
         LocalDate prevDateCandle = today;
         // get the next date time
         for (int i = candleId ;i >= 0 ; i--) {
@@ -594,7 +594,7 @@ public class IndicatorFactory {
      */
     private Double isTomorrowHoliday(int candleId) {
         RawCandlestick currentCandle = rawCandlestickList.get(candleId);
-        LocalDate today = currentCandle.getCurrentDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
+        LocalDate today = currentCandle.getRawCandlestickKey().getDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
         LocalDate nextDateCandle = today;
         // get the next date time
         for (int i = candleId ;i <= rawCandlestickList.size() ; i++) {

@@ -31,9 +31,10 @@ public class LearnerRequestForm {
     private Double learningRate;
     private Boolean testConvergance;
     private String stopCondition;
+    private String normalizer;
 
     // TODO
     private Integer batchSize;
-    private String normalizer;
+
 
  }
