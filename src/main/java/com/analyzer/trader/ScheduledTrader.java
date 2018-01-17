@@ -66,7 +66,7 @@ public class ScheduledTrader {
         this.token = token;
     }
 
-    //@Scheduled(cron = "1 0 * * * MON-FRI", zone = "UTC")
+    //@Scheduled(cron = "10 0 * * * MON-FRI", zone = "UTC")
     @Scheduled(cron = "* * * * * *")
     public void reportCurrentTime() throws Exception {
         if (dailyTradingPropertiesPath != null && !"".equals(dailyTradingPropertiesPath)) {

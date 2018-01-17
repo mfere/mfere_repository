@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,13 +90,37 @@ public class ReaderUtil {
             Instant toDate,
             GranularityValue granularity,
             InstrumentValue instrument,
-            RawCandlestickRepository rawCandlestickRepository) throws ParseException {
+            RawCandlestickRepository rawCandlestickRepository) throws Exception {
         RawCandlestick rawCandlestick;
-        rawCandlestick = rawCandlestickRepository.findOne(
-                fromDate,
-                granularity,
-                instrument);
+        int i = 0;
+        do {
+            rawCandlestick = rawCandlestickRepository.findOne(
+                    fromDate,
+                    granularity,
+                    instrument);
+            if (rawCandlestick == null) {
+                log.info("Candlestick not found on date: "+ fromDate);
+                LocalDateTime nextDate;
+                if (granularity == GranularityValue.D) {
+                    nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusDays(1);
+                } else if (granularity == GranularityValue.H4) {
+                    nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusHours(4);
+                } else if (granularity == GranularityValue.H2) {
+                    nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusHours(2);
+                } else if (granularity == GranularityValue.H1) {
+                    nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusHours(1);
+                } else {
+                    throw new Exception("Could not found any candlestick up to "+ fromDate);
+                }
+                fromDate = nextDate.toInstant(ZoneOffset.UTC);
+                i++;
+            }
+        } while (rawCandlestick == null && i < 10);
 
+        if (rawCandlestick == null) {
+            throw new Exception("Could not found any candlestick up to "+ fromDate);
+        }
+        log.info("Found candlestick on date: "+ fromDate);
         List<RawCandlestick> rawCandlestickList = new ArrayList<>();
         while (rawCandlestick.getNextDateTime() != null &&
                 !rawCandlestick.getNextDateTime().isAfter(

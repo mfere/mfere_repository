@@ -6,8 +6,10 @@ import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.RewardFunction;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
+@Getter
 public abstract class FixedTakeProfit implements RewardFunctionBuilder {
 
     protected static final double PROBABILITY_THRESHOLD = 0.7;
