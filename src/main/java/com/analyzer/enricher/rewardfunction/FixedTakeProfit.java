@@ -26,8 +26,8 @@ public abstract class FixedTakeProfit implements RewardFunctionBuilder {
         GranularityValue granularity = GranularityValue.valueOf(closePriceCandlestick.getRawCandlestickKey().getGranularity());
         InstrumentValue instrument = InstrumentValue.valueOf(closePriceCandlestick.getRawCandlestickKey().getInstrument());
         Double closeValue = closePriceCandlestick.getMidRawCandlestickData().getClose();
-        double sellValue = closeValue - distance;
-        double buyValue = closeValue + distance;
+        double sellValue = closeValue - (closeValue * distance);
+        double buyValue = closeValue + (closeValue * distance);
         Action selectedLabel = getLabel(closePriceCandlestick, granularity, interval, instrument, sellValue, buyValue);
         //log.info("found label: "+ selectedLabel);
         return new RewardFunction(name, selectedLabel.getValue());

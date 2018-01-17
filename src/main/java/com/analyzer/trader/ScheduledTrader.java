@@ -66,8 +66,8 @@ public class ScheduledTrader {
         this.token = token;
     }
 
-    //@Scheduled(cron = "10 0 * * * MON-FRI", zone = "UTC")
-    @Scheduled(cron = "* * * * * *")
+    @Scheduled(cron = "2 0 * * * MON-FRI", zone = "UTC")
+    //@Scheduled(cron = "* * * * * *")
     public void reportCurrentTime() throws Exception {
         if (dailyTradingPropertiesPath != null && !"".equals(dailyTradingPropertiesPath)) {
             log.info("The time is now {}", dateFormat.format(new Date()));
@@ -119,7 +119,7 @@ public class ScheduledTrader {
                 if (!lastCandle.getComplete()) {
                     lastCandle = instrumentCandles.get(instrumentCandles.size()-2);
                 }
-                log.info("Predictiong candle: "+ lastCandle);
+                log.info("Predicting candle: "+ lastCandle);
 
                 Instant lastInstant = Instant.parse(lastCandle.getTime());
 
@@ -164,28 +164,35 @@ public class ScheduledTrader {
 
                 // Use model to predict last data
                 INDArray prediction = model.output(input,false);
-                log.info("predicted: " + prediction);
+                log.info("predicted probabilities per label s: " + prediction);
 
                 RewardFunctionBuilder rewardFunctionBuilder = RewardFunctionFactory.getRewardFunction(rewardFunction);
                 Action action = rewardFunctionBuilder.getAction(prediction);
 
 
+                // Place order based on result and reward function
                 if (Action.SELL == action || Action.BUY == action) {
                     // Retrieve oanda account data
                     OandaTradingClient client = new OandaTradingClient(url, token, config.getString("trade.oanda.account_id"));
 
-                    String transactionId;
+                    String transactionId = null;
                     if (Action.SELL == action) {
-                        transactionId = client.sell(instrument, rewardFunctionBuilder, config.getInt("trade.amount"));
+                        log.info("Do sell");
+                        if (!config.getBoolean("trade.simulate",false)) {
+                            transactionId = client.sell(instrument, rewardFunctionBuilder, config.getInt("trade.amount"));
+                        }
                     } else {
-                        transactionId = client.buy(instrument, rewardFunctionBuilder, config.getInt("trade.amount"));
+                        log.info("Do buy");
+                        if (!config.getBoolean("trade.simulate",false)) {
+                            transactionId = client.buy(instrument, rewardFunctionBuilder, config.getInt("trade.amount"));
+                        }
                     }
-                    log.info("Created "+transactionId);
+                    if (!config.getBoolean("trade.simulate",false)) {
+                        log.info("Created " + transactionId);
+                    }
+                } else {
+                    log.info("Nothing to do");
                 }
-
-                // Place order based on result and reward function
-
-
             }
         }
 

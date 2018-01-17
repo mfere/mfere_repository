@@ -237,7 +237,7 @@ public class LearnerController {
             // Save the models
             int score = (int) (eval.f1()*10000);
             String filePath = trainedNetworksPath+"/"+learnerRequestForm.getName()+"_"+score;
-            ModelSerializer.writeModel(model, filePath + ".models",true);
+            ModelSerializer.writeModel(model, filePath + ".model",true);
             if (normalizer != null) {
                 // Save the normalizer
                 // Now we want to save the normalizer to a binary file. For doing this, one can use the NormalizerSerializer.

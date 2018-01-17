@@ -106,16 +106,18 @@ public class OandaTradingClient {
             marketOrderRequest.setUnits(amount);
             StopLossDetails stopLossDetails = new StopLossDetails();
             DecimalFormat df = new DecimalFormat("#.#####");
+            Double midAmount = (Double.valueOf(prices.getCloseoutBid().toString()) + Double.valueOf(prices.getCloseoutAsk().toString())) / 2;
             if (amount > 0) {
-                stopLossDetails.setPrice(df.format(Double.valueOf(prices.getCloseoutBid().toString())-0.005d));
+                // TODO refactor reward function is something that makes more sense to that I can use its distance here
+                stopLossDetails.setPrice(df.format(midAmount-(midAmount*0.005d)));
             } else {
-                stopLossDetails.setPrice(df.format(Double.valueOf(prices.getCloseoutBid().toString())+0.005d));
+                stopLossDetails.setPrice(df.format(midAmount+(midAmount*0.005d)));
             }
             TakeProfitDetails takeProfitDetails = new TakeProfitDetails();
             if (amount > 0) {
-                takeProfitDetails.setPrice(df.format(Double.valueOf(prices.getCloseoutBid().toString())+0.005d));
+                takeProfitDetails.setPrice(df.format(midAmount+(midAmount*0.005d)));
             } else {
-                takeProfitDetails.setPrice(df.format(Double.valueOf(prices.getCloseoutBid().toString())-0.005d));
+                takeProfitDetails.setPrice(df.format(midAmount-(midAmount*0.005d)));
             }
             marketOrderRequest.setStopLossOnFill(stopLossDetails);
             marketOrderRequest.setTakeProfitOnFill(takeProfitDetails);

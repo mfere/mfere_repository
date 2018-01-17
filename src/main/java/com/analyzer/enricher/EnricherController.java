@@ -70,9 +70,11 @@ public class EnricherController {
             for (int i = 0; i < rawCandlestickList.size(); i++){
                 rawCandlestick = rawCandlestickList.get(i);
                 for (IndicatorValue indicatorName : indicatorList) {
-                    rawCandlestick.addIndicator(
-                            new FxIndicator(indicatorName.name(), indicatorFactory.getIndicatorValue(indicatorName, i))
-                    );
+                    if (indicatorFactory.getIndicatorValue(indicatorName, i) != null) {
+                        rawCandlestick.addIndicator(
+                                new FxIndicator(indicatorName.name(), indicatorFactory.getIndicatorValue(indicatorName, i))
+                        );
+                    }
                 }
             }
 
