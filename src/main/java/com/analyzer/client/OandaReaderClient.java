@@ -1,6 +1,6 @@
 package com.analyzer.client;
 
-import com.analyzer.constants.GranularityValue;
+import com.analyzer.constants.GranularityType;
 import com.analyzer.constants.InstrumentValue;
 import com.oanda.v20.Context;
 import com.oanda.v20.instrument.Candlestick;
@@ -42,7 +42,7 @@ public class OandaReaderClient {
     public List<Candlestick> getInstrumentCandles(
             Instant fromDate,
             Instant toDate,
-            GranularityValue granularity,
+            GranularityType granularity,
             InstrumentValue instrument) throws Exception {
 
         List<Candlestick> candlesticks = new ArrayList<>();

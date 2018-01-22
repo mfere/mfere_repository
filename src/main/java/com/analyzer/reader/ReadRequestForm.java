@@ -20,6 +20,6 @@ public class ReadRequestForm {
     private String fromDate;// = "2016-01-01 00:00:00";
     @DateTimeFormat(pattern = DATE_TIME_PATTERN)
     private String toDate;// = "2016-02-01 00:00:00";
-    private List<String> granularity;// = GranularityValue.D.getName();
+    private List<String> granularity;// = GranularityType.D.getName();
 
  }

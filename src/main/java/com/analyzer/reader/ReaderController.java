@@ -1,8 +1,7 @@
 package com.analyzer.reader;
 
-import com.analyzer.constants.GranularityValue;
+import com.analyzer.constants.GranularityType;
 import com.analyzer.constants.InstrumentValue;
-import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.client.OandaReaderClient;
 import com.oanda.v20.instrument.Candlestick;
@@ -57,7 +56,7 @@ public class ReaderController {
 
 
             for (String granularityName : readRequestForm.getGranularity()) {
-                GranularityValue granularity = GranularityValue.valueOf(granularityName);
+                GranularityType granularity = GranularityType.valueOf(granularityName);
 
                 List<Candlestick> candles = oandaClient.getInstrumentCandles(
                         fromDate, toDate,

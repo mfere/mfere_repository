@@ -1,6 +1,6 @@
 package com.analyzer.reader;
 
-import com.analyzer.constants.GranularityValue;
+import com.analyzer.constants.GranularityType;
 import com.analyzer.constants.InstrumentValue;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
@@ -44,7 +44,7 @@ public class ReaderUtil {
     }
 
     public static void saveCandles(
-            GranularityValue granularity,
+            GranularityType granularity,
             InstrumentValue instrument,
             List<Candlestick> candles,
             RawCandlestickRepository rawCandlestickRepository) {
@@ -88,7 +88,7 @@ public class ReaderUtil {
     public static List<RawCandlestick> getRawCandlesticks(
             Instant fromDate,
             Instant toDate,
-            GranularityValue granularity,
+            GranularityType granularity,
             InstrumentValue instrument,
             RawCandlestickRepository rawCandlestickRepository) throws Exception {
         RawCandlestick rawCandlestick;
@@ -101,13 +101,13 @@ public class ReaderUtil {
             if (rawCandlestick == null) {
                 log.info("Candlestick not found on date: "+ fromDate);
                 LocalDateTime nextDate;
-                if (granularity == GranularityValue.D) {
+                if (granularity == GranularityType.D) {
                     nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusDays(1);
-                } else if (granularity == GranularityValue.H4) {
+                } else if (granularity == GranularityType.H4) {
                     nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusHours(4);
-                } else if (granularity == GranularityValue.H2) {
+                } else if (granularity == GranularityType.H2) {
                     nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusHours(2);
-                } else if (granularity == GranularityValue.H1) {
+                } else if (granularity == GranularityType.H1) {
                     nextDate = LocalDateTime.ofInstant(fromDate, ZoneId.of("UTC")).plusHours(1);
                 } else {
                     throw new Exception("Could not found any candlestick up to "+ fromDate);

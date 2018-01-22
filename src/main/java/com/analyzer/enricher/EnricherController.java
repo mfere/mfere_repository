@@ -1,17 +1,16 @@
 package com.analyzer.enricher;
 
-import com.analyzer.constants.GranularityValue;
-import com.analyzer.constants.IndicatorValue;
+import com.analyzer.constants.GranularityType;
+import com.analyzer.constants.IndicatorType;
 import com.analyzer.constants.InstrumentValue;
-import com.analyzer.constants.RewardFunctionValue;
-import com.analyzer.enricher.rewardfunction.RewardFunctionBuilder;
-import com.analyzer.enricher.rewardfunction.RewardFunctionFactory;
+import com.analyzer.constants.StrategyType;
+import com.analyzer.enricher.strategy.Strategy;
+import com.analyzer.enricher.strategy.StrategyFactory;
 import com.analyzer.model.FxIndicator;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReadRequestForm;
 import com.analyzer.reader.ReaderUtil;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,7 +19,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +45,7 @@ public class EnricherController {
 
         RawCandlestick rawCandlestick;
         try {
-            GranularityValue granularity = GranularityValue.valueOf(
+            GranularityType granularity = GranularityType.valueOf(
                     enrichRequestForm.getGranularity());
             InstrumentValue instrument = InstrumentValue.valueOf(
                     enrichRequestForm.getInstrument());
@@ -60,16 +58,16 @@ public class EnricherController {
                     rawCandlestickRepository);
 
             // initial all necessary indicators in IndicatorFactory
-            List<IndicatorValue> indicatorList = new ArrayList<>();
+            List<IndicatorType> indicatorList = new ArrayList<>();
             for (String indicatorName : enrichRequestForm.getIndicators()) {
-                indicatorList.add(IndicatorValue.valueOf(indicatorName));
+                indicatorList.add(IndicatorType.valueOf(indicatorName));
             }
             IndicatorFactory indicatorFactory = new IndicatorFactory(rawCandlestickList);
 
             // set value for each candles indicator
             for (int i = 0; i < rawCandlestickList.size(); i++){
                 rawCandlestick = rawCandlestickList.get(i);
-                for (IndicatorValue indicatorName : indicatorList) {
+                for (IndicatorType indicatorName : indicatorList) {
                     if (indicatorFactory.getIndicatorValue(indicatorName, i) != null) {
                         rawCandlestick.addIndicator(
                                 new FxIndicator(indicatorName.name(), indicatorFactory.getIndicatorValue(indicatorName, i))
@@ -78,16 +76,16 @@ public class EnricherController {
                 }
             }
 
-            for (String rewardFunctionName : enrichRequestForm.getRewardFunctions()) {
-                RewardFunctionBuilder rewardFunctionBuilder = RewardFunctionFactory.getRewardFunction(
-                        RewardFunctionValue.valueOf(rewardFunctionName),
-                        rawCandlestickRepository);
-                if (rewardFunctionBuilder == null) {
+            for (String strategyType : enrichRequestForm.getStrategies()) {
+                Strategy strategy = StrategyFactory.getStrategy(
+                        StrategyType.valueOf(strategyType));
+                if (strategy == null) {
                     log.info("No reward builder found");
                     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                 }
                 for (RawCandlestick candlestick : rawCandlestickList) {
-                    candlestick.addRewardFunction(rewardFunctionBuilder.getRewardFunction(candlestick));
+                    candlestick.addActionStrategy(strategy.getCorrectActionStrategy(
+                            rawCandlestickRepository, candlestick));
                 }
             }
 

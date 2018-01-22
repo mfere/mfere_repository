@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public enum GranularityValue {
+public enum GranularityType {
 
     /**
      * 5 second candlesticks, minute alignment

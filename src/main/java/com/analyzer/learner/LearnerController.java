@@ -1,6 +1,7 @@
 package com.analyzer.learner;
 
 import com.analyzer.constants.*;
+import com.analyzer.enricher.strategy.StrategyFactory;
 import com.analyzer.learner.stopcondition.StopCondition;
 import com.analyzer.learner.stopcondition.StopConditionFactory;
 import com.analyzer.model.RawCandlestick;
@@ -29,9 +30,6 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.AbstractDataSetNormalizer;
-import org.nd4j.linalg.dataset.api.preprocessor.AbstractNormalizer;
-import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
-import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +41,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.io.*;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -79,15 +76,12 @@ public class LearnerController {
         FileWriter writer = null;
         PrintWriter printWriter = null;
         try {
-            GranularityValue granularity = GranularityValue.valueOf(
+            GranularityType granularity = GranularityType.valueOf(
                     learnerRequestForm.getGranularity());
             InstrumentValue instrument = InstrumentValue.valueOf(
                     learnerRequestForm.getInstrument());
-            RewardFunctionValue rewardFunction = RewardFunctionValue.valueOf(
-                    learnerRequestForm.getRewardFunction());
-            if (rewardFunction == null) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
+            StrategyType strategyType = StrategyType.valueOf(
+                    learnerRequestForm.getStrategy());
 
             // TRAIN DATA CREATION
             rawCandlestick = rawCandlestickRepository.findOne(
@@ -136,8 +130,8 @@ public class LearnerController {
             if (learnerRequestForm.getTestConvergance()) {
                 numInputs++;
             }
-            int numOutputs = rewardFunction.getLabelNumber();
-            int batchNumber=50;
+            int numOutputs = strategyType.getLabelNumber();
+            int batchNumber=learnerRequestForm.getBatchNumber();
             int trainBatchSize=trainSize/batchNumber;
             int testBatchSize=testSize/batchNumber;
             log.info("batchNumber: "+ batchNumber);
@@ -148,7 +142,7 @@ public class LearnerController {
             rrTest.initialize(new FileSplit(new File(tmpTestFile.getAbsolutePath())));
 
             DataSetIterator testIterator = new RecordReaderDataSetIterator(
-                    rrTest, testBatchSize, 0, rewardFunction.getLabelNumber());
+                    rrTest, testBatchSize, 0, strategyType.getLabelNumber());
 
             RecordReader rrTrain = new CSVRecordReader();
             rrTrain.initialize(new FileSplit(new File(tmpTrainFile.getAbsolutePath())));
@@ -162,18 +156,18 @@ public class LearnerController {
 
 
             DataSetIterator trainIterator = new RecordReaderDataSetIterator(
-                    rrTrain, trainBatchSize, 0, rewardFunction.getLabelNumber());
+                    rrTrain, trainBatchSize, 0, strategyType.getLabelNumber());
 
             DataSetIterator testScoreIterator = new RecordReaderDataSetIterator(
-                    rrScoreTest, testBatchSize, 0, rewardFunction.getLabelNumber());
+                    rrScoreTest, testBatchSize, 0, strategyType.getLabelNumber());
 
             DataSetIterator trainScoreIterator = new RecordReaderDataSetIterator(
-                    rrScoreTrain, trainBatchSize, 0, rewardFunction.getLabelNumber());
+                    rrScoreTrain, trainBatchSize, 0, strategyType.getLabelNumber());
 
             // Normalize test data in range 0-1 for more accurate scoring
             //NormalizerStandardize trainNormalizer = new NormalizerStandardize();
             AbstractDataSetNormalizer normalizer = NormalizerFactory.getNormalizer(
-                    NormalizerValue.valueOf(learnerRequestForm.getNormalizer()));
+                    NormalizerType.valueOf(learnerRequestForm.getNormalizer()));
             if (normalizer != null) {
                 normalizer.fitLabel(true);
                 normalizer.fit(trainIterator);
@@ -192,7 +186,7 @@ public class LearnerController {
             model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(1000));
 
             StopCondition stopCondition = StopConditionFactory.getStopCondition(
-                    StopConditionValue.valueOf(learnerRequestForm.getStopCondition()), model,
+                    StopConditionType.valueOf(learnerRequestForm.getStopCondition()), model,
                     trainScoreIterator, testScoreIterator);
             if (stopCondition == null) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -236,7 +230,7 @@ public class LearnerController {
 
             // Save the models
             int score = (int) (eval.f1()*10000);
-            String filePath = trainedNetworksPath+"/"+learnerRequestForm.getName()+"_"+score;
+            String filePath = trainedNetworksPath+"/" + (new Date().getTime())+"_"+learnerRequestForm.getName()+"_"+score;
             ModelSerializer.writeModel(model, filePath + ".model",true);
             if (normalizer != null) {
                 // Save the normalizer
@@ -245,11 +239,19 @@ public class LearnerController {
                 serializer.write(normalizer, filePath + ".normalizer");
             }
 
-            // Save the used indicators
-            FileOutputStream fos = new FileOutputStream(filePath + ".ind");
+            // Save the used strategyType
+            FileOutputStream fos = new FileOutputStream(filePath + ".str");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(StrategyFactory.getStrategy(strategyType));
+            oos.close();
+            fos.close();
+
+            // Save the used indicators
+            fos = new FileOutputStream(filePath + ".ind");
+            oos = new ObjectOutputStream(fos);
             oos.writeObject(learnerRequestForm.getIndicators());
             oos.close();
+            fos.close();
 
             return new ResponseEntity<>("ok", HttpStatus.OK);
         } catch (IllegalArgumentException e) {
@@ -308,19 +310,19 @@ public class LearnerController {
             @Valid @RequestBody LearnerRequestForm learnerRequestForm,
             RawCandlestick rawCandlestick,
             PrintWriter printWriter,
-            GranularityValue granularity,
+            GranularityType granularity,
             InstrumentValue instrument) throws Exception {
         rawCandlestick = rawCandlestickRepository.findOne(
                 rawCandlestick.getNextDateTime(),
                 granularity,
                 instrument);
-        List<IndicatorValue> indicatorValues = new ArrayList<>();
+        List<IndicatorType> indicatorTypes = new ArrayList<>();
         for (String indicatorName : learnerRequestForm.getIndicators()) {
-            indicatorValues.add(IndicatorValue.valueOf(indicatorName));
+            indicatorTypes.add(IndicatorType.valueOf(indicatorName));
         }
-        RewardFunctionValue rewardFunctionValue = RewardFunctionValue.valueOf(
-                learnerRequestForm.getRewardFunction());
-        printWriter.println(rawCandlestick.toCsvLine(rewardFunctionValue, indicatorValues,
+        StrategyType strategyType = StrategyType.valueOf(
+                learnerRequestForm.getStrategy());
+        printWriter.println(rawCandlestick.toCsvLine(strategyType, indicatorTypes,
                 learnerRequestForm.getTestConvergance() != null ? learnerRequestForm.getTestConvergance() : false));
         printWriter.flush();
         return rawCandlestick;

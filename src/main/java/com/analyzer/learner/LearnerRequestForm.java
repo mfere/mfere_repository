@@ -24,17 +24,16 @@ public class LearnerRequestForm {
     private String testFromDate;// = "2016-01-01 00:00:00";
     @DateTimeFormat(pattern = DATE_TIME_PATTERN)
     private String testToDate;// = "2016-02-01 00:00:00";
-    private String granularity;// = GranularityValue.D.getName();
+    private String granularity;// = GranularityType.D.getName();
     private List<String> indicators;
-    private String rewardFunction;
+    private String strategy;
     private String networkConfiguration;
     private Double learningRate;
     private Boolean testConvergance;
     private String stopCondition;
     private String normalizer;
 
-    // TODO
-    private Integer batchSize;
+    private Integer batchNumber = 50;
 
 
  }

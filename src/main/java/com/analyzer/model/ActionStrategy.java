@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @AllArgsConstructor
-public class RewardFunction {
-    private String name;
-    private Integer value;
+public class ActionStrategy {
+    private String strategyTypeValue;
+    private Integer actionTypeValue;
 }

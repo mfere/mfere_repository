@@ -1,9 +1,9 @@
 package com.analyzer.model;
 
-import com.analyzer.constants.GranularityValue;
-import com.analyzer.constants.IndicatorValue;
+import com.analyzer.constants.GranularityType;
+import com.analyzer.constants.IndicatorType;
 import com.analyzer.constants.InstrumentValue;
-import com.analyzer.constants.RewardFunctionValue;
+import com.analyzer.constants.StrategyType;
 import com.oanda.v20.instrument.Candlestick;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,12 +39,12 @@ public class RawCandlestick implements Persistable {
     private Instant nextDateTime;
     private Instant prevDateTime;
     private FxIndicator[] fxIndicators;
-    private RewardFunction[] strategies;
+    private ActionStrategy[] actionStrategies;
 
     private RawCandlestick() {}
 
     public RawCandlestick(Candlestick candlestick,
-                          GranularityValue granularity,
+                          GranularityType granularity,
                           InstrumentValue instrumentValue,
                           Candlestick prevCandlestick,
                           Candlestick nextCandlestick) throws ParseException {
@@ -84,32 +84,32 @@ public class RawCandlestick implements Persistable {
         }
     }
 
-    public void addRewardFunction(RewardFunction rewardFunction){
-        if (strategies == null) {
-            strategies = new RewardFunction[1];
-            strategies[0] = rewardFunction;
+    public void addActionStrategy(ActionStrategy actionStrategy){
+        if (actionStrategies == null) {
+            actionStrategies = new ActionStrategy[1];
+            actionStrategies[0] = actionStrategy;
         } else {
-            List<RewardFunction> rewardList = new ArrayList<>();
-            rewardList.addAll(Arrays.asList(strategies));
+            List<ActionStrategy> rewardList = new ArrayList<>();
+            rewardList.addAll(Arrays.asList(actionStrategies));
 
             boolean alreadyAdded = false;
-            for (RewardFunction oldRewardFunction: rewardList) {
-                if (oldRewardFunction.getName().equals(rewardFunction.getName())) {
-                    oldRewardFunction.setValue(rewardFunction.getValue());
+            for (ActionStrategy oldActionStrategy : rewardList) {
+                if (oldActionStrategy.getStrategyTypeValue().equals(actionStrategy.getStrategyTypeValue())) {
+                    oldActionStrategy.setActionTypeValue(actionStrategy.getActionTypeValue());
                     alreadyAdded = true;
                     break;
                 }
             }
             if (!alreadyAdded) {
-                rewardList.add(rewardFunction);
+                rewardList.add(actionStrategy);
             }
-            strategies = rewardList.toArray(new RewardFunction[rewardList.size()]);
+            actionStrategies = rewardList.toArray(new ActionStrategy[rewardList.size()]);
         }
     }
 
     // First column is always reward function
-    public String toCsvLine(RewardFunctionValue rewardFunctionValue,
-                            List<IndicatorValue> indicatorValues,
+    public String toCsvLine(StrategyType strategyType,
+                            List<IndicatorType> indicatorTypes,
                             boolean testConvergence) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         boolean found = false;
@@ -117,21 +117,21 @@ public class RawCandlestick implements Persistable {
         //stringBuilder.append(getRawCandlestickKey().dateTime);
         //stringBuilder.append(",");
 
-        if (strategies != null) {
-            for (RewardFunction rewardFunction : strategies) {
-                if (rewardFunction.getName().equals(rewardFunctionValue.name())) {
-                    stringBuilder.append(rewardFunction.getValue());
+        if (actionStrategies != null) {
+            for (ActionStrategy actionStrategy : actionStrategies) {
+                if (actionStrategy.getStrategyTypeValue().equals(strategyType.name())) {
+                    stringBuilder.append(actionStrategy.getActionTypeValue());
                     found = true;
                     if (testConvergence) {
                         stringBuilder.append(",");
-                        stringBuilder.append(rewardFunction.getValue());
+                        stringBuilder.append(actionStrategy.getActionTypeValue());
                     }
                     break;
                 }
 
             }
             if (!found) {
-                throw new Exception("Reward function ("+rewardFunctionValue.name()+") " +
+                throw new Exception("Reward function ("+ strategyType.name()+") " +
                         "value not found for instant " + getRawCandlestickKey().getDateTime().toString());
             }
         } else {
@@ -153,10 +153,10 @@ public class RawCandlestick implements Persistable {
         //stringBuilder.append(volume);
 
         if (fxIndicators != null) {
-            for (IndicatorValue indicatorValue : indicatorValues) {
+            for (IndicatorType indicatorType : indicatorTypes) {
                 found = false;
                 for (FxIndicator indicator : fxIndicators) {
-                    if (indicator.getName().equalsIgnoreCase(indicatorValue.name())) {
+                    if (indicator.getName().equalsIgnoreCase(indicatorType.name())) {
                         stringBuilder.append(",");
                         stringBuilder.append(indicator.getValue());
                         found = true;
@@ -164,7 +164,7 @@ public class RawCandlestick implements Persistable {
                     }
                 }
                 if (!found) {
-                    throw new Exception("Indicator ("+indicatorValue.name()+") "
+                    throw new Exception("Indicator ("+ indicatorType.name()+") "
                             + "value not found for instant " + getRawCandlestickKey().getDateTime().toString());
                 }
             }

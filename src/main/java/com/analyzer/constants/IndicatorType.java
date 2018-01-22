@@ -6,7 +6,7 @@ import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 
 @AllArgsConstructor
-public enum IndicatorValue {
+public enum IndicatorType {
     CLOSE_PRICE_RAW("close_price_raw"),
     VOLUME_RAW("volume"),
 
@@ -121,6 +121,7 @@ public enum IndicatorValue {
     STOCHASTIC_OSCILLATOR_IS_K_DOWNWARD_SLOPING("stochastic_oscillator_is_K_downward_sloping"),
     STOCHASTIC_OSCILLATOR_IS_D_UPWARD_SLOPING("stochastic_oscillator_D_upward_sloping"),
     STOCHASTIC_OSCILLATOR_IS_D_DOWNWARD_SLOPING("stochastic_oscillator_D_downward_sloping"),
+
 
     // holiday
     IS_YESTERDAY_HOLIDAY("is_yesterday_holiday"),
