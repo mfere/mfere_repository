@@ -29,7 +29,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.sound.midi.Instrument;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -106,7 +105,9 @@ public class ScheduledTrader {
             PropertiesConfiguration config = new PropertiesConfiguration(resource.getFile());
             InstrumentValue instrument = InstrumentValue.valueOf(config.getString("trade.instrument"));
             StrategyType strategy = StrategyType.valueOf(config.getString("trade.strategy"));
-            checkForTrade(instrument, strategy, config, instrumentMap.get(instrument));
+            if(!config.getBoolean("trade.simulate")) {
+                checkForTrade(instrument, strategy, config, instrumentMap.get(instrument));
+            }
         }
     }
 
@@ -150,7 +151,7 @@ public class ScheduledTrader {
                               StrategyType strategyType,
                               PropertiesConfiguration config,
                               List<RawCandlestick> rawCandlestickList) throws Exception {
-
+        log.info("Checking trade for instrument: "+ instrument);
 
         // Create model from provided file
         MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(config.getString("model.path"));
@@ -210,7 +211,8 @@ public class ScheduledTrader {
         if (ActionType.SELL == action.getType() || ActionType.BUY == action.getType()) {
             // Retrieve oanda account data
             OandaTradingClient client = new OandaTradingClient(url, token, config.getString("trade.oanda.account_id"));
-            client.doAction(action);
+            String transactionId = client.doAction(action);
+            log.info("Did action: "+transactionId);
         } else {
             log.info("Nothing to do");
         }

@@ -19,7 +19,7 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnDaily() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setBatchNumber(10);
+        form.setBatchNumber(50);
         form.setLearningRate(0.001);
         form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_100.name());
         form.setName("D_USD_JPY");
@@ -111,7 +111,7 @@ public class LearnTest extends ApplicationTest {
         form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
         form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_100.name());
         form.setIndicators(getAbsoluteIndicators());
-        form.setBatchNumber(30);
+        form.setBatchNumber(50);
         form.setLearningRate(0.001);
         form.setNormalizer(NormalizerType.MIN_MAX.name());
         form.setTestConvergance(false);

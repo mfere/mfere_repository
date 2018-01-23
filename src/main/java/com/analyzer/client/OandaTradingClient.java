@@ -77,65 +77,6 @@ public class OandaTradingClient {
         }
     }
 
-    public String sell(InstrumentValue instrumentValue, Strategy actionStrategy, int amount) {
-        return buy(instrumentValue, actionStrategy, -amount);
-    }
-
-    public String buy(InstrumentValue instrumentValue, Strategy actionStrategy, int amount) {
-        InstrumentName instrument = instrumentValue.getInstrumentName();
-
-        try {
-            List<InstrumentName> instruments = new ArrayList<>();
-            instruments.add(instrumentValue.getInstrumentName());
-            PricingGetRequest priceRequest = new PricingGetRequest(accountID, instruments);
-            priceRequest.setSince(Instant.now().minusSeconds(60).toString());
-            PricingGetResponse resp = ctx.pricing.get(priceRequest);
-            Price prices = resp.getPrices().get(resp.getPrices().size()-1);
-
-            // Create the new request
-            OrderCreateRequest request = new OrderCreateRequest(accountID);
-            // Create the required body parameter
-            MarketOrderRequest marketOrderRequest = new MarketOrderRequest();
-            // Populate the body parameter fields
-            marketOrderRequest.setInstrument(instrument);
-            marketOrderRequest.setUnits(amount);
-            StopLossDetails stopLossDetails = new StopLossDetails();
-
-            Double midAmount = (Double.valueOf(prices.getCloseoutBid().toString()) + Double.valueOf(prices.getCloseoutAsk().toString())) / 2;
-            //Double midAmount = instrumentCandles.get(instrumentCandles.size() - 1).getMid().getC().doubleValue();
-            DecimalFormat df = midAmount < 10.0 ? new DecimalFormat("#.#####") :
-                    midAmount < 100.0 ? new DecimalFormat("#.####") : new DecimalFormat("#.###");
-            if (amount > 0) {
-                // TODO refactor reward function is something that makes more sense to that I can use its distance here
-                stopLossDetails.setPrice(df.format(midAmount-(midAmount*0.005d)));
-            } else {
-                stopLossDetails.setPrice(df.format(midAmount+(midAmount*0.005d)));
-            }
-            TakeProfitDetails takeProfitDetails = new TakeProfitDetails();
-            if (amount > 0) {
-                takeProfitDetails.setPrice(df.format(midAmount+(midAmount*0.005d)));
-            } else {
-                takeProfitDetails.setPrice(df.format(midAmount-(midAmount*0.005d)));
-            }
-            marketOrderRequest.setStopLossOnFill(stopLossDetails);
-            marketOrderRequest.setTakeProfitOnFill(takeProfitDetails);
-            // Attach the body parameter to the request
-            request.setOrder(marketOrderRequest);
-            // Execute the request and obtain the response object
-            OrderCreateResponse response = ctx.order.create(request);
-            // Extract the Order Fill transaction for the executed Market Order
-            Transaction transaction = response.getOrderCreateTransaction();
-            if (response.getOrderCancelTransaction() != null) {
-                throw new Exception("Could not create order:" + response.getOrderCancelTransaction().getReason().toString());
-            }
-            // Extract the trade ID of the created trade from the transaction and keep it for future action
-            return transaction.getId().toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
     public String doAction(Action action) {
         try {
             InstrumentName instrument = action.getInstrument().getInstrumentName();

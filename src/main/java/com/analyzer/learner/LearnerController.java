@@ -41,7 +41,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.io.*;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -95,13 +97,24 @@ public class LearnerController {
             printWriter = new PrintWriter(writer);
 
             int trainSize = 0;
+            List<RawCandlestick> testCandlesticks = new ArrayList<>();
+            testCandlesticks.add(rawCandlestick);
             while (rawCandlestick.getNextDateTime() != null &&
                     !rawCandlestick.getNextDateTime().isAfter(
                             ReaderUtil.parse(learnerRequestForm.getTrainToDate(),ReadRequestForm.DATE_TIME_PATTERN)
                     )){
-                rawCandlestick = writeCsvFile(learnerRequestForm, rawCandlestick, printWriter, granularity, instrument);
+                rawCandlestick = rawCandlestickRepository.findOne(
+                        rawCandlestick.getNextDateTime(),
+                        granularity,
+                        instrument);
+                testCandlesticks.add(rawCandlestick);
+            }
+            Collections.shuffle(testCandlesticks);
+            for (RawCandlestick shuffledCandlestick : testCandlesticks) {
+                writeCsvFile(learnerRequestForm, shuffledCandlestick, printWriter, granularity, instrument);
                 trainSize++;
             }
+
             log.info("saved train temporary file: "+tmpTrainFile.getAbsolutePath());
 
             // TEST DATA CREATION
@@ -120,7 +133,11 @@ public class LearnerController {
                     !rawCandlestick.getNextDateTime().isAfter(
                             ReaderUtil.parse(learnerRequestForm.getTestToDate(),ReadRequestForm.DATE_TIME_PATTERN)
                     )){
-                rawCandlestick = writeCsvFile(learnerRequestForm, rawCandlestick, printWriter, granularity, instrument);
+                writeCsvFile(learnerRequestForm, rawCandlestick, printWriter, granularity, instrument);
+                rawCandlestick = rawCandlestickRepository.findOne(
+                        rawCandlestick.getNextDateTime(),
+                        granularity,
+                        instrument);
                 testSize++;
             }
 
@@ -133,7 +150,7 @@ public class LearnerController {
             int numOutputs = strategyType.getLabelNumber();
             int batchNumber=learnerRequestForm.getBatchNumber();
             int trainBatchSize=trainSize/batchNumber;
-            int testBatchSize=testSize/batchNumber;
+            int testBatchSize=testSize;
             log.info("batchNumber: "+ batchNumber);
             log.info("trainBatchSize: "+ trainBatchSize);
             log.info("testBatchSize: "+ testBatchSize);
@@ -196,7 +213,8 @@ public class LearnerController {
                 while(trainIterator.hasNext())
                 {
                     DataSet next = trainIterator.next();
-                    next.shuffle(123132);
+                    //next.shuffle(123132);
+                    next.shuffle();
                     model.fit(next);
                 }
                 trainIterator.reset();
@@ -306,16 +324,12 @@ public class LearnerController {
         return conf;
     }
 
-    private RawCandlestick writeCsvFile(
+    private void writeCsvFile(
             @Valid @RequestBody LearnerRequestForm learnerRequestForm,
             RawCandlestick rawCandlestick,
             PrintWriter printWriter,
             GranularityType granularity,
             InstrumentValue instrument) throws Exception {
-        rawCandlestick = rawCandlestickRepository.findOne(
-                rawCandlestick.getNextDateTime(),
-                granularity,
-                instrument);
         List<IndicatorType> indicatorTypes = new ArrayList<>();
         for (String indicatorName : learnerRequestForm.getIndicators()) {
             indicatorTypes.add(IndicatorType.valueOf(indicatorName));
@@ -325,6 +339,5 @@ public class LearnerController {
         printWriter.println(rawCandlestick.toCsvLine(strategyType, indicatorTypes,
                 learnerRequestForm.getTestConvergance() != null ? learnerRequestForm.getTestConvergance() : false));
         printWriter.flush();
-        return rawCandlestick;
     }
 }

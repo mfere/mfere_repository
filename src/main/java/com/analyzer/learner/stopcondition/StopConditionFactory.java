@@ -17,8 +17,8 @@ public class StopConditionFactory {
             case FIXED_EPOC_LENGTH_10000: return new FixedEpocLength(10000, model);
             case LEAST_ERROR_LAST_100: return new LeastError(100, model);
             case LEAST_ERROR_LAST_1000: return new LeastError(1000, model);
-            case BEST_SCORE_TRAIN_LAST_10: return new BestF1Score(10, 10, model, trainIterator);
-            case BEST_SCORE_TEST_LAST_10: return new BestF1Score(10, 10, model, testIterator);
+            case BEST_SCORE_TRAIN_LAST_1000: return new BestF1Score(10, 1000, model, trainIterator);
+            case BEST_SCORE_TEST_LAST_1000: return new BestF1Score(10, 1000, model, testIterator);
             default: return null;
         }
     }
