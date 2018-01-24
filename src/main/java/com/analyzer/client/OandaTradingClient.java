@@ -103,13 +103,8 @@ public class OandaTradingClient {
             Double midAmount = (Double.valueOf(prices.getCloseoutBid().toString()) + Double.valueOf(prices.getCloseoutAsk().toString())) / 2;
             DecimalFormat df = midAmount < 10.0 ? new DecimalFormat("#.#####") :
                     midAmount < 100.0 ? new DecimalFormat("#.####") : new DecimalFormat("#.###");
-            if (action.getType() == ActionType.BUY) {
-                 takeProfitDetails.setPrice(df.format(midAmount + action.getInstrument().getDistance(action.getTakeProfitPips())));
-                 stopLossDetails.setPrice(df.format(midAmount - action.getInstrument().getDistance(action.getStopLossPips())));
-            } else {
-                takeProfitDetails.setPrice(df.format(midAmount - action.getInstrument().getDistance(action.getTakeProfitPips())));
-                stopLossDetails.setPrice(df.format(midAmount + action.getInstrument().getDistance(action.getStopLossPips())));
-            }
+            takeProfitDetails.setPrice(df.format(midAmount + action.getInstrument().getDistance(action.getTakeProfitPips())));
+            stopLossDetails.setPrice(df.format(midAmount - action.getInstrument().getDistance(action.getStopLossPips())));
             marketOrderRequest.setStopLossOnFill(stopLossDetails);
             marketOrderRequest.setTakeProfitOnFill(takeProfitDetails);
             // Attach the body parameter to the request
