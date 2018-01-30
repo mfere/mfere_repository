@@ -63,23 +63,25 @@ public class ReaderUtil {
                     instant,
                     granularity,
                     instrument);
-            if (rawCandlestick == null) {
-                rawCandlestick = rawCandlestickRepository.save(
-                        candles.get(i),
-                        granularity,
-                        instrument,
-                        previous, next);
-                log.info("Saved new value: "+rawCandlestick);
-            } else if ((rawCandlestick.getNextDateTime() == null && next != null)
-                    || (rawCandlestick.getPrevDateTime() == null && previous != null)) {
-                if (next != null) {
-                    rawCandlestick.setPrevDateTime(Instant.parse(next.getTime()));
+            if (candles.get(i).getComplete()) {
+                if (rawCandlestick == null) {
+                    rawCandlestick = rawCandlestickRepository.save(
+                            candles.get(i),
+                            granularity,
+                            instrument,
+                            previous, next);
+                    log.info("Saved new value: "+rawCandlestick);
+                } else if ((rawCandlestick.getNextDateTime() == null && next != null)
+                        || (rawCandlestick.getPrevDateTime() == null && previous != null)) {
+                    if (next != null) {
+                        rawCandlestick.setNextDateTime(Instant.parse(next.getTime()));
+                    }
+                    if (previous != null) {
+                        rawCandlestick.setPrevDateTime(Instant.parse(previous.getTime()));
+                    }
+                    rawCandlestick = rawCandlestickRepository.save(rawCandlestick);
+                    log.info("Updated value: "+rawCandlestick);
                 }
-                if (previous != null) {
-                    rawCandlestick.setPrevDateTime(Instant.parse(previous.getTime()));
-                }
-                rawCandlestick = rawCandlestickRepository.save(rawCandlestick);
-                log.info("Updated value: "+rawCandlestick);
             }
             previous = candles.get(i);
         }
@@ -122,15 +124,20 @@ public class ReaderUtil {
         }
         log.info("Found candlestick on date: "+ fromDate);
         List<RawCandlestick> rawCandlestickList = new ArrayList<>();
-        while (rawCandlestick.getNextDateTime() != null &&
-                !rawCandlestick.getNextDateTime().isAfter(
+        while (rawCandlestick != null &&
+                !rawCandlestick.getRawCandlestickKey().getDateTime().isAfter(
                         toDate
                 )){
             rawCandlestickList.add(rawCandlestick);
-            rawCandlestick = rawCandlestickRepository.findOne(
-                    rawCandlestick.getNextDateTime(),
-                    granularity,
-                    instrument);
+            if (rawCandlestick.getNextDateTime() != null) {
+                rawCandlestick = rawCandlestickRepository.findOne(
+                        rawCandlestick.getNextDateTime(),
+                        granularity,
+                        instrument);
+            } else {
+                rawCandlestick = null;
+            }
+
         }
         return rawCandlestickList;
     }

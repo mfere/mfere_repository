@@ -1,25 +1,17 @@
-package com.analyzer.trader;
+package com.analyzer;
 
 import com.analyzer.client.OandaReaderClient;
 import com.analyzer.client.OandaTradingClient;
 import com.analyzer.constants.*;
 import com.analyzer.enricher.IndicatorFactory;
-import com.analyzer.constants.ActionType;
-import com.analyzer.enricher.action.Action;
-import com.analyzer.enricher.strategy.Strategy;
-import com.analyzer.enricher.strategy.StrategyFactory;
-import com.analyzer.learner.LearnerController;
 import com.analyzer.model.FxIndicator;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReaderUtil;
+import com.analyzer.trader.TradeStrategy;
 import com.oanda.v20.instrument.Candlestick;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.api.preprocessor.AbstractDataSetNormalizer;
-import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.nd4j.linalg.factory.Nd4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +29,8 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 
 @Component
-public class ScheduledTrader {
-    private static final Logger log = LoggerFactory.getLogger(LearnerController.class);
+public class Scheduler {
+    private static final Logger log = LoggerFactory.getLogger(Scheduler.class);
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 
@@ -51,7 +43,7 @@ public class ScheduledTrader {
     private String url;
     private String token;
 
-    public ScheduledTrader(
+    public Scheduler(
             @Value("${trader.configuration.daily}")String dailyTradingPropertiesPath,
             @Value("${trader.configuration.test}")String testTradingPropertiesPath,
             @Value("${oanda.url}") String url,
@@ -66,7 +58,7 @@ public class ScheduledTrader {
         this.token = token;
     }
 
-    //@Scheduled(cron = "0 * * * * *", zone = "UTC")
+   // @Scheduled(cron = "0 * * * * *", zone = "UTC")
     public void testTransaction() throws Exception {
         if (testTradingPropertiesPath != null && !"".equals(testTradingPropertiesPath)) {
             elaborateOperations(testTradingPropertiesPath);
@@ -104,10 +96,10 @@ public class ScheduledTrader {
         for (Resource resource : resources) {
             PropertiesConfiguration config = new PropertiesConfiguration(resource.getFile());
             InstrumentValue instrument = InstrumentValue.valueOf(config.getString("trade.instrument"));
-            StrategyType strategy = StrategyType.valueOf(config.getString("trade.strategy"));
-            if(!config.getBoolean("trade.simulate")) {
-                checkForTrade(instrument, strategy, config, instrumentMap.get(instrument));
-            }
+            OandaTradingClient client = new OandaTradingClient(url, token, config.getString("trade.oanda.account_id"));
+            TradeStrategy tradeStrategy = new TradeStrategy(client, config);
+            tradeStrategy.setInput(calculateInput(instrumentMap.get(instrument),config.getString("model.indicators.path")));
+            tradeStrategy.checkForTrade();
         }
     }
 
@@ -147,38 +139,25 @@ public class ScheduledTrader {
                 rawCandlestickRepository);
     }
 
-    public void checkForTrade(InstrumentValue instrument,
-                              StrategyType strategyType,
-                              PropertiesConfiguration config,
-                              List<RawCandlestick> rawCandlestickList) throws Exception {
-        log.info("Checking trade for instrument: "+ instrument);
-
-        // Create model from provided file
-        MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(config.getString("model.path"));
-
-        // Create normalizer if needed
-        AbstractDataSetNormalizer normalizer = null;
-        String normalizerPath = config.getString("model.normalizer.path",null);
-        if (normalizerPath != null) {
-            NormalizerSerializer serializer = NormalizerSerializer.getDefault();
-            normalizer = serializer.restore(normalizerPath);
-        }
-
-        // Read indicators to use
-        String indicatorPath = config.getString("model.indicators.path");
-        FileInputStream fis = new FileInputStream(indicatorPath);
-        ObjectInputStream ois = new ObjectInputStream(fis);
-        List<String> indicators = (List<String>) ois.readObject();
-        ois.close();
+    public INDArray calculateInput(
+            List<RawCandlestick> rawCandlestickList,
+            String indicatorPath
+    ) throws Exception {
 
         IndicatorFactory indicatorFactory = new IndicatorFactory(rawCandlestickList);
         RawCandlestick rawCandlestick;
-        INDArray input = Nd4j.zeros(indicators.size());
+        // Read predictionIndicators to use
+        FileInputStream fis = new FileInputStream(indicatorPath);
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        List<String> predictionIndicators = (List<String>) ois.readObject();
+        ois.close();
+
+        INDArray input = Nd4j.zeros(predictionIndicators.size());
         int column = 0;
         for (int i = 0; i < rawCandlestickList.size(); i++){
             rawCandlestick = rawCandlestickList.get(i);
 
-            for (String indicatorName : indicators) {
+            for (String indicatorName : predictionIndicators) {
                 FxIndicator indicator = new FxIndicator(indicatorName,
                         indicatorFactory.getIndicatorValue(IndicatorType.valueOf(indicatorName), i));
                 rawCandlestick.addIndicator(indicator);
@@ -189,33 +168,7 @@ public class ScheduledTrader {
                 }
             }
         }
-
-        // Normalize iterator if needed
-        if (normalizer != null) {
-            normalizer.transform(input);
-        }
-
-        // Use model to predict last data
-        INDArray prediction = model.output(input,false);
-        log.info("predicted probabilities per label s: " + prediction);
-
-        Strategy actionStrategy = StrategyFactory.getStrategy(strategyType);
-        Action action = actionStrategy.getPredictedAction(
-                instrument,
-                prediction,
-                config.getInt("trade.amount"),
-                config.getDouble("trade.probability.treshold")
-        );
-
-        // Place order based on result and reward function
-        if (ActionType.SELL == action.getType() || ActionType.BUY == action.getType()) {
-            // Retrieve oanda account data
-            OandaTradingClient client = new OandaTradingClient(url, token, config.getString("trade.oanda.account_id"));
-            String transactionId = client.doAction(action);
-            log.info("Did action: "+transactionId);
-        } else {
-            log.info("Nothing to do");
-        }
+        return input;
     }
 
 }

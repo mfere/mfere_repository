@@ -23,10 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class OandaTradingClient {
+public class OandaTradingClient implements TradingClient {
 
     private static final Logger log = LoggerFactory.getLogger(OandaTradingClient.class);
-
 
     private final Context ctx;
     private final AccountID accountID;

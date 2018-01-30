@@ -30,8 +30,8 @@ public class FixedBuySellTakeProfit extends FixedTakeProfit {
 
     @Override
     public ActionType getPredictedActionType(INDArray prediction, double probabilityTreshold) {
-        return prediction.getDouble(2) > probabilityTreshold ? ActionType.SELL :
-                prediction.getDouble(3) > probabilityTreshold ? ActionType.BUY : ActionType.NOTHING;
+        return prediction.getDouble(2) > probabilityTreshold ? ActionType.BUY :
+                prediction.getDouble(3) > probabilityTreshold ? ActionType.SELL : ActionType.NOTHING;
     }
 
 }

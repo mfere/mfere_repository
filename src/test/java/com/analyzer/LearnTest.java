@@ -19,8 +19,7 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnDaily() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setBatchNumber(50);
-        form.setLearningRate(0.001);
+        form.setStrategy(StrategyType.B_TAKE_PROFIT_005_24.name());
         form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_100.name());
         form.setName("D_USD_JPY");
         form.setInstrument(InstrumentValue.USD_JPY.name());
@@ -60,9 +59,8 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnRelative() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setNormalizer(NormalizerType.STANDARD.name());
+        form.setNormalizer(NormalizerType.MIN_MAX.name());
         form.setIndicators(getRelativeIndicators());
-        form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
 
         ResponseEntity<String> response = template.postForEntity(
                 learnURI, form, String.class);
@@ -73,14 +71,14 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testConvergance() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setIndicators(getRelativeIndicators());
+        form.setIndicators(getAbsoluteIndicators());
         form.setTrainFromDate("2010-01-04 00:00:00");
         form.setTrainToDate("2010-01-31 00:00:00");
         form.setName("D_EUR_USD");
-        form.setNetworkConfiguration(readNetworkConfiguration("5layerNetwork"));
+        form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
         form.setBatchNumber(1);
-        form.setLearningRate(0.00001);
-        form.setNormalizer(NormalizerType.STANDARD.name());
+        form.setLearningRate(0.001);
+        //form.setNormalizer(NormalizerType.STANDARD.name());
         form.setStopCondition(StopConditionType.FIXED_EPOC_LENGTH_10000.name());
         checkLearn(form);
     }

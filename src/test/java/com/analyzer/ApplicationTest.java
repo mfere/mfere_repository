@@ -48,9 +48,13 @@ public class ApplicationTest {
 
     protected URI readURI;
 
+    protected URI simulateURI;
+
     protected URI enrichURI;
 
     protected URI learnURI;
+
+    protected URI runDailyURI;
 
     @Autowired
     protected TestRestTemplate template;
@@ -64,6 +68,8 @@ public class ApplicationTest {
         this.readURI = new URI(baseUrl + "/read");
         this.enrichURI = new URI(baseUrl + "/enrich");
         this.learnURI = new URI(baseUrl + "/learn");
+        this.simulateURI = new URI(baseUrl + "/simulate");
+        this.runDailyURI = new URI(baseUrl + "/runDaily");
     }
 
     @Test
@@ -72,6 +78,12 @@ public class ApplicationTest {
         new EnricherTest().testEnrichAll();
         new LearnTest().testLearnAll();
     }
+
+    @Test
+    public void testDaily() throws Exception {
+        template.getForEntity(runDailyURI, String.class);
+    }
+
 
     @NotNull
     List<String> getAbsoluteIndicators() {
