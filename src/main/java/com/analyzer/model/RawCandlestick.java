@@ -65,8 +65,7 @@ public class RawCandlestick implements Persistable {
             fxIndicators = new FxIndicator[1];
             fxIndicators[0] = indicator;
         } else {
-            List<FxIndicator> fxIndicatorList = new ArrayList<>();
-            fxIndicatorList.addAll(Arrays.asList(fxIndicators));
+            List<FxIndicator> fxIndicatorList = new ArrayList<>(Arrays.asList(fxIndicators));
 
 
             boolean alreadyAdded = false;
@@ -89,8 +88,7 @@ public class RawCandlestick implements Persistable {
             actionStrategies = new ActionStrategy[1];
             actionStrategies[0] = actionStrategy;
         } else {
-            List<ActionStrategy> rewardList = new ArrayList<>();
-            rewardList.addAll(Arrays.asList(actionStrategies));
+            List<ActionStrategy> rewardList = new ArrayList<>(Arrays.asList(actionStrategies));
 
             boolean alreadyAdded = false;
             for (ActionStrategy oldActionStrategy : rewardList) {
@@ -120,7 +118,11 @@ public class RawCandlestick implements Persistable {
         if (actionStrategies != null) {
             for (ActionStrategy actionStrategy : actionStrategies) {
                 if (actionStrategy.getStrategyTypeValue().equals(strategyType.name())) {
-                    stringBuilder.append(actionStrategy.getActionTypeValue());
+                    if (strategyType.getLabelNumber() > 2) {
+                        stringBuilder.append(actionStrategy.getActionTypeValue());
+                    } else {
+                        stringBuilder.append(actionStrategy.getActionTypeValue() > 0 ? 1 : 0);
+                    }
                     found = true;
                     if (testConvergence) {
                         stringBuilder.append(",");
@@ -175,6 +177,24 @@ public class RawCandlestick implements Persistable {
         }
 
         return stringBuilder.toString();
+    }
+
+    public ActionStrategy getActionStrategy (String name) {
+        for (ActionStrategy actionStrategy : actionStrategies) {
+            if (actionStrategy.getStrategyTypeValue().equals(name)) {
+                return actionStrategy;
+            }
+        }
+        return null;
+    }
+
+    public FxIndicator getFxIndicator (String name) {
+        for (FxIndicator fxIndicator : fxIndicators) {
+            if (fxIndicator.getName().equals(name)) {
+                return fxIndicator;
+            }
+        }
+        return null;
     }
 
     @Override

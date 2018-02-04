@@ -24,10 +24,10 @@ public class SimulatorTest extends ApplicationTest {
     }
 
     @Test
-    public void testSimulator() throws Exception {
+    public void testSimulator() {
         SimulationRequestForm form = new SimulationRequestForm();
-        form.setFromDate("2017-01-04 00:00:00");
-        form.setToDate("2017-06-04 00:00:00");
+        form.setFromDate("2017-06-04 00:00:00");
+        form.setToDate("2018-02-01 00:00:00");
         checkReadResponse(form);
     }
 }

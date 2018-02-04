@@ -66,7 +66,7 @@ public class LearnerController {
 
     @RequestMapping(value = "/learn", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<String> read(
+    public ResponseEntity<String> learn(
             @Valid @RequestBody LearnerRequestForm learnerRequestForm,
             BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {

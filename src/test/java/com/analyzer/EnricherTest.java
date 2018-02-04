@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 public class EnricherTest extends ApplicationTest {
 
     @Test
-    public void testEnrichAbsolute() throws Exception {
+    public void testEnrichAbsolute() {
         EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
         enrichRequestForm.setIndicators(getAbsoluteIndicators());
         enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
@@ -40,7 +40,7 @@ public class EnricherTest extends ApplicationTest {
     }
 
     @Test
-    public void testEnrichRelative() throws Exception {
+    public void testEnrichRelative() {
         EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
         enrichRequestForm.setIndicators(getRelativeIndicators());
         enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
@@ -57,7 +57,7 @@ public class EnricherTest extends ApplicationTest {
     }
 
     @Test
-    public void testEnrichAll() throws Exception {
+    public void testEnrichAll() {
         EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
 
         enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
@@ -74,23 +74,58 @@ public class EnricherTest extends ApplicationTest {
 
     }
 
+    @Test
+    public void testForBug() {
+        EnrichRequestForm enrichRequestForm = new EnrichRequestForm();
+        enrichRequestForm.setFromDate("2018-01-31 00:00:00");
+        enrichRequestForm.setToDate("2018-01-31 00:00:00");
+        enrichRequestForm.setGranularity(GranularityType.D.name());
+        enrichRequestForm.setIndicators(new ArrayList<>());
+        enrichRequestForm.setInstrument(InstrumentValue.GBP_USD.name());
+        List<String> strategies = new ArrayList<>();
+        strategies.add(StrategyType.BS_TAKE_PROFIT_005_24.name());
+        enrichRequestForm.setStrategies(strategies);
+        checkEnrichResponse(enrichRequestForm);
+
+    }
+    //O GBP 9:00 1.41990
+    //L GBP 16:00  1.41590
+
+    @Test
+    public void testEnrichStrategy() {
+        EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
+        enrichRequestForm.setIndicators(new ArrayList<>());
+
+        enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
+        checkEnrichResponse(enrichRequestForm);
+
+        enrichRequestForm.setInstrument(InstrumentValue.EUR_USD.name());
+        checkEnrichResponse(enrichRequestForm);
+
+        enrichRequestForm.setInstrument(InstrumentValue.GBP_USD.name());
+        checkEnrichResponse(enrichRequestForm);
+
+        enrichRequestForm.setInstrument(InstrumentValue.USD_JPY.name());
+        checkEnrichResponse(enrichRequestForm);
+    }
+
     private EnrichRequestForm createBaseEnrichForm() {
         EnrichRequestForm enrichRequestForm = new EnrichRequestForm();
         enrichRequestForm.setFromDate("2010-01-04 00:00:00");
-        enrichRequestForm.setToDate("2018-01-04 00:00:00");
+        enrichRequestForm.setToDate("2018-02-03 00:00:00");
         enrichRequestForm.setGranularity(GranularityType.D.name());
         List<String> indicators = new ArrayList<>();
         List<IndicatorType> indicatorTypeList = new ArrayList<>(Arrays.asList(IndicatorType.values()));
         for (IndicatorType indicatorType : indicatorTypeList) {
             indicators.add(indicatorType.name());
         }
-        List<String> rewardFunctions = new ArrayList<>();
+        List<String> strategies = new ArrayList<>();
         List<StrategyType> strategyTypeList = new ArrayList<>(Arrays.asList(StrategyType.values()));
         for (StrategyType strategyType : strategyTypeList) {
-            rewardFunctions.add(strategyType.name());
+            strategies.add(strategyType.name());
         }
         enrichRequestForm.setIndicators(indicators);
-        enrichRequestForm.setStrategies(rewardFunctions);
+        enrichRequestForm.setStrategies(strategies);
 
         enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
         return enrichRequestForm;
@@ -118,30 +153,33 @@ public class EnricherTest extends ApplicationTest {
         assertEquals(rawCandlestickResponse.getBody().getRawCandlestickKey().getGranularity(), enrichRequestForm.getGranularity());
         assertEquals(rawCandlestickResponse.getBody().getRawCandlestickKey().getDateTime().toString(), "2017-08-02T00:00:00Z");
         assertNotNull(rawCandlestickResponse.getBody().getFxIndicators());
-        FxIndicator[] fxIndicators = rawCandlestickResponse.getBody().getFxIndicators();
-        assertTrue("rawCandlestickResponse should have indicators after add",
-                fxIndicators.length > 0);
-        boolean hasAddedIndicator = false;
-		for (FxIndicator fxIndicator: fxIndicators) {
-			assertNotNull(fxIndicator.getName());
-			//assertNotNull(fxIndicator.getValue());
-			if (fxIndicator.getName().equals(indicators.get(indicators.size()-1))) {
-				hasAddedIndicator = true;
-			}
-		}
-		assertTrue("rawCandlestickResponse should have new added indicator", hasAddedIndicator);
-
-        ActionStrategy[] actionStrategies = rawCandlestickResponse.getBody().getActionStrategies();
-        assertTrue("rawCandlestickResponse should have actionStrategies after add",
-                actionStrategies.length > 0);
-        boolean hasAddedRewardFunction = false;
-        for (ActionStrategy actionStrategy : actionStrategies) {
-            assertNotNull(actionStrategy.getActionTypeValue());
-            assertNotNull(actionStrategy.getStrategyTypeValue());
-            if (actionStrategy.getStrategyTypeValue().equals(strategies.get(0))) {
-                hasAddedRewardFunction = true;
+        if (indicators.size() > 0) {
+            FxIndicator[] fxIndicators = rawCandlestickResponse.getBody().getFxIndicators();
+            assertTrue("rawCandlestickResponse should have indicators after add",
+                    fxIndicators.length > 0);
+            boolean hasAddedIndicator = false;
+            for (FxIndicator fxIndicator : fxIndicators) {
+                assertNotNull(fxIndicator.getName());
+                //assertNotNull(fxIndicator.getValue());
+                if (fxIndicator.getName().equals(indicators.get(indicators.size() - 1))) {
+                    hasAddedIndicator = true;
+                }
             }
+            assertTrue("rawCandlestickResponse should have new added indicator", hasAddedIndicator);
         }
-        assertTrue("rawCandlestickResponse should have new added strategy", hasAddedRewardFunction);
+        if (strategies.size() > 0) {
+            ActionStrategy[] actionStrategies = rawCandlestickResponse.getBody().getActionStrategies();
+            assertTrue("rawCandlestickResponse should have actionStrategies after add",
+                    actionStrategies.length > 0);
+            boolean hasAddedStrategy = false;
+            for (ActionStrategy actionStrategy : actionStrategies) {
+                assertNotNull(actionStrategy.getActionTypeValue());
+                assertNotNull(actionStrategy.getStrategyTypeValue());
+                if (actionStrategy.getStrategyTypeValue().equals(strategies.get(0))) {
+                    hasAddedStrategy = true;
+                }
+            }
+            assertTrue("rawCandlestickResponse should have new added strategy", hasAddedStrategy);
+        }
     }
 }

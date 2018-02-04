@@ -70,7 +70,7 @@ public class TradeStrategy {
     }
 
     public Action checkForTrade() throws Exception {
-        log.info("Checking trade for instrument: "+ instrument);
+        log.debug("Checking trade for instrument: "+ instrument);
 
         // Create model from provided file
         MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(config.getString("model.path"));
@@ -90,7 +90,7 @@ public class TradeStrategy {
 
         // Use model to predict last data
         INDArray prediction = model.output(input,false);
-        log.info("predicted probabilities per label s: " + prediction);
+        log.debug("predicted probabilities per label s: " + prediction);
 
         Strategy actionStrategy = StrategyFactory.getStrategy(strategy);
         Action action = actionStrategy.getPredictedAction(
@@ -104,12 +104,13 @@ public class TradeStrategy {
         if (!config.getBoolean("trade.simulate")) {
             if (ActionType.SELL == action.getType() || ActionType.BUY == action.getType()) {
                 // Retrieve oanda account data
+                log.debug("Performing action: "+action.getType().name());
                 String transactionId = tradingClient.doAction(action);
                 if (transactionId != null) {
-                    log.info("Did action: "+transactionId);
+                    log.debug("Transaction id: "+transactionId);
                 }
             } else {
-                log.info("Nothing to do");
+                log.debug("Nothing to do");
             }
         }
         return action;

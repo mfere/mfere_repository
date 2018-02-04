@@ -646,6 +646,9 @@ public class IndicatorFactory {
         LocalDate nextDateCandle = today;
         // get the next date time
         for (int i = candleId ;i <= rawCandlestickList.size() ; i++) {
+            if (rawCandlestickList.get(i).getNextDateTime() == null) {
+                return TrainingValue.INDICATOR_NOT_EXIST.getValue();
+            }
             nextDateCandle = rawCandlestickList.get(i).getNextDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
             if (!today.isEqual(nextDateCandle)) {
                 break;

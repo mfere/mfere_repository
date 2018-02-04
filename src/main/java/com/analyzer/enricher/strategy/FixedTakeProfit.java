@@ -9,32 +9,35 @@ import com.analyzer.model.repository.RawCandlestickRepository;
 
 public abstract class FixedTakeProfit extends Strategy {
 
-    FixedTakeProfit(String name, int interval, int pipNumber) {
-        super(name, interval, pipNumber, pipNumber);
+    FixedTakeProfit(String name, int interval, int takeProfitPipNumber, int stopLossPipNumber) {
+        super(name, interval, takeProfitPipNumber, stopLossPipNumber);
     }
 
     public ActionStrategy getCorrectActionStrategy(RawCandlestickRepository rawCandlestickRepository,
                                                    RawCandlestick closePriceCandlestick) {
-        if (closePriceCandlestick.getNextDateTime() == null) {
-            new ActionStrategy(name, ActionType.NOTHING.getValue());
-        }
         GranularityType granularity = GranularityType.valueOf(closePriceCandlestick.getRawCandlestickKey().getGranularity());
         InstrumentValue instrument = InstrumentValue.valueOf(closePriceCandlestick.getRawCandlestickKey().getInstrument());
         Double closeValue = closePriceCandlestick.getMidRawCandlestickData().getClose();
-        double sellValue = closeValue - instrument.getDistance(takeProfitPipNumber);
-        double buyValue = closeValue + instrument.getDistance(takeProfitPipNumber);
-        ActionType selectedLabel = getCorrectActionType(rawCandlestickRepository,closePriceCandlestick, granularity, interval, instrument, sellValue, buyValue);
+        RawCandlestick nextCandlestick = rawCandlestickRepository.findOne(
+                closePriceCandlestick.getNextDateTime(),
+                granularity,
+                instrument);
+        ActionType selectedLabel = getCorrectActionType(rawCandlestickRepository,
+                nextCandlestick, granularity, interval, instrument, closeValue);
         return new ActionStrategy(name, selectedLabel.getValue());
     }
 
     private ActionType getCorrectActionType(RawCandlestickRepository rawCandlestickRepository,
                                             RawCandlestick nextCandlestick,
                                             GranularityType granularity, int interval,
-                                            InstrumentValue instrument, double sellValue, double buyValue) {
-        ActionType selectedLabel = ActionType.NOTHING;
+                                            InstrumentValue instrument, double closeValue) {
+        ActionType selectedLabel = null;
         for (int i = 0; i < interval; i++) {
-            selectedLabel = chooseActionType(nextCandlestick, buyValue, sellValue);
-            if (selectedLabel.equals(ActionType.BOTH)) {
+            if (nextCandlestick == null) {
+                return ActionType.NOTHING;
+            }
+            selectedLabel = chooseActionType(nextCandlestick, closeValue, instrument);
+            if (ActionType.BOTH.equals(selectedLabel)) {
                 // Find lower granularity value and interval
                 GranularityType lowerGranularity;
                 int lowerInterval;
@@ -62,7 +65,7 @@ public abstract class FixedTakeProfit extends Strategy {
                             lowerInterval = 30;
                             break;
                         default:
-                            return selectedLabel;
+                            return ActionType.NOTHING;
                     }
                     granularity = lowerGranularity;
                     nextCandlestick = rawCandlestickRepository.findOne(
@@ -71,8 +74,8 @@ public abstract class FixedTakeProfit extends Strategy {
                             instrument);
                 } while (nextCandlestick == null);
                 selectedLabel = getCorrectActionType(rawCandlestickRepository,
-                        nextCandlestick, lowerGranularity, lowerInterval, instrument, sellValue, buyValue);
-            } else if (!selectedLabel.equals(ActionType.NOTHING)) {
+                        nextCandlestick, lowerGranularity, lowerInterval, instrument, closeValue);
+            } else if (selectedLabel != null) {
                 break;
             } else {
                 nextCandlestick = rawCandlestickRepository.findOne(
@@ -80,16 +83,14 @@ public abstract class FixedTakeProfit extends Strategy {
                         granularity,
                         instrument);
                 if (nextCandlestick == null) {
-                    return selectedLabel;
+                    return ActionType.NOTHING;
                 }
             }
         }
-        return selectedLabel;
+        return selectedLabel != null ? selectedLabel : ActionType.NOTHING;
     }
 
-    protected abstract ActionType chooseActionType(
-            RawCandlestick nextCandlestick,
-            double buyValue,
-            double sellValue);
+    public abstract ActionType chooseActionType(RawCandlestick nextCandlestick,
+                     Double closeValue, InstrumentValue instrumentValue);
 
 }

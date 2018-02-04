@@ -79,10 +79,6 @@ public class EnricherController {
             for (String strategyType : enrichRequestForm.getStrategies()) {
                 Strategy strategy = StrategyFactory.getStrategy(
                         StrategyType.valueOf(strategyType));
-                if (strategy == null) {
-                    log.info("No reward builder found");
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
                 for (RawCandlestick candlestick : rawCandlestickList) {
                     candlestick.addActionStrategy(strategy.getCorrectActionStrategy(
                             rawCandlestickRepository, candlestick));
