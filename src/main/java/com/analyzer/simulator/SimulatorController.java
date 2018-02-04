@@ -64,7 +64,7 @@ public class SimulatorController {
 
     @RequestMapping(value = "/simulate", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<String> simulate(
+    public ResponseEntity<String> simulate (
             @Valid @RequestBody SimulationRequestForm simulationRequestForm,
             BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
@@ -80,6 +80,7 @@ public class SimulatorController {
             Resource[] resources = resolver.getResources(dailyTradingPropertiesPath);
 
             // For each instrument retriew candlestick to elaborate for prediction
+            int totalGain = 0;
             for (Resource resource : resources) {
                 log.info("Reading trading settings file: " + resource.getFilename());
                 PropertiesConfiguration config = new PropertiesConfiguration(resource.getFile());
@@ -94,30 +95,43 @@ public class SimulatorController {
                 int correct = 0;
                 int incorrect = 0;
                 int nothing = 0;
+                int consecutiveIncorrect = 0;
+                int maxConsecutiveIncorrect = 0;
                 for (RawCandlestick rawCandlestick : rawCandlestickList) {
                     tradeStrategy.calculateInput(rawCandlestick);
-                    Action action = tradeStrategy.checkForTrade();
-
-                    for (ActionStrategy actionStrategy : rawCandlestick.getActionStrategies()) {
-                        if (actionStrategy.getStrategyTypeValue().equals(tradeStrategy.getStrategy().name())) {
-                            if (actionStrategy.getActionTypeValue().equals(action.getType().getValue())) {
-                                log.info("Predicted correct "+action.getType() + " on date: "+rawCandlestick.getRawCandlestickKey().getDateTime());
-                                correct++;
-                            } else if (action.getType() != ActionType.NOTHING){
-                                log.info("Predicted incorrect "+action.getType() + " on date: "+rawCandlestick.getRawCandlestickKey().getDateTime());
-                                incorrect++;
-                            } else {
-                                log.info("Predicted to do nothing instead of "+actionStrategy.getActionTypeValue());
-                                nothing++;
-                            }
+                    Action predictedAction = tradeStrategy.checkForTrade();
+                    ActionStrategy correctAction = rawCandlestick.getActionStrategy(tradeStrategy.getStrategy().name());
+                    if (correctAction.getActionTypeValue().equals(predictedAction.getType().getValue())) {
+                        log.info("Predicted correct "+predictedAction.getType()
+                                + " on date: "+rawCandlestick.getRawCandlestickKey().getDateTime());
+                        correct++;
+                        consecutiveIncorrect = 0;
+                    } else if (predictedAction.getType() != ActionType.NOTHING){
+                        log.info("Predicted incorrect "+predictedAction.getType()
+                                + " on date: "+rawCandlestick.getRawCandlestickKey().getDateTime());
+                        incorrect++;
+                        consecutiveIncorrect++;
+                        if (consecutiveIncorrect > maxConsecutiveIncorrect) {
+                            maxConsecutiveIncorrect = consecutiveIncorrect;
                         }
+                    } else {
+                        log.info("Predicted NOTHING instead of "+ActionType.getActionType(correctAction.getActionTypeValue())
+                                + " on date: "+rawCandlestick.getRawCandlestickKey().getDateTime());
+                        nothing++;
                     }
                 }
+
                 log.info("Instrument "+ instrument + " correct predictions: "+correct);
                 log.info("Instrument "+ instrument + " incorrect predictions: "+incorrect);
                 log.info("Instrument "+ instrument + " no predictions: "+nothing);
+                log.info("Instrument "+ instrument + " correct percentage: "+(correct * 100 / (correct + incorrect))+"%");
+                log.info("Instrument "+ instrument + " max consecutive incorrect: "+maxConsecutiveIncorrect);
+                log.info("Instrument "+ instrument + " gain: "+(correct-incorrect));
+                totalGain += correct - incorrect;
                 //log.info("Instrument "+ instrument + " correct ratio: "+ratio+"%");
             }
+            log.info("Total gain: " + totalGain);
+
             return new ResponseEntity<>("ok", HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();

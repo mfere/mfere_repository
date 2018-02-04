@@ -19,10 +19,10 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnDaily() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setStrategy(StrategyType.B_TAKE_PROFIT_005_24.name());
+        form.setStrategy(StrategyType.S_TAKE_PROFIT_005_24.name());
         form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_100.name());
-        form.setName("D_USD_JPY");
-        form.setInstrument(InstrumentValue.USD_JPY.name());
+        form.setName("SD_EUR_USD");
+        form.setInstrument(InstrumentValue.EUR_USD.name());
         checkLearn(form);
     }
 
@@ -71,6 +71,7 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testConvergance() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
+        form.setStrategy(StrategyType.B_TAKE_PROFIT_005_24.name());
         form.setIndicators(getAbsoluteIndicators());
         form.setTrainFromDate("2010-01-04 00:00:00");
         form.setTrainToDate("2010-01-31 00:00:00");
@@ -103,7 +104,7 @@ public class LearnTest extends ApplicationTest {
         form.setTrainFromDate("2010-01-04 00:00:00");
         form.setTrainToDate("2015-12-31 00:00:00");
         form.setTestFromDate("2016-01-04 00:00:00");
-        form.setTestToDate("2017-11-01 00:00:00");
+        form.setTestToDate("2018-01-31 00:00:00");
         form.setGranularity(GranularityType.D.name());
         form.setInstrument(InstrumentValue.EUR_USD.name());
         form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());

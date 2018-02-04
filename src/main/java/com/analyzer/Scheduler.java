@@ -65,7 +65,7 @@ public class Scheduler {
         }
     }
 
-    @Scheduled(cron = "0 2 0 * * MON-FRI", zone = "UTC")
+    @Scheduled(cron = "30 4 0 * * MON-FRI", zone = "UTC")
     public void dailyTransaction() throws Exception {
         if (dailyTradingPropertiesPath != null && !"".equals(dailyTradingPropertiesPath)) {
             elaborateOperations(dailyTradingPropertiesPath);
@@ -98,7 +98,8 @@ public class Scheduler {
             InstrumentValue instrument = InstrumentValue.valueOf(config.getString("trade.instrument"));
             OandaTradingClient client = new OandaTradingClient(url, token, config.getString("trade.oanda.account_id"));
             TradeStrategy tradeStrategy = new TradeStrategy(client, config);
-            tradeStrategy.setInput(calculateInput(instrumentMap.get(instrument),config.getString("model.indicators.path")));
+            List<RawCandlestick> rawCandlesticks = instrumentMap.get(instrument);
+            tradeStrategy.setInput(calculateInput(rawCandlesticks,config.getString("model.indicators.path")));
             tradeStrategy.checkForTrade();
         }
     }
@@ -117,8 +118,6 @@ public class Scheduler {
         Instant prevInstant = calendar.toInstant();
 
         // Get latest candlestick and add to db
-
-
         List<Candlestick> instrumentCandles = oandaClient.getInstrumentCandles(
                 lastCandleInstant, null,
                 granularity, instrument);
@@ -156,6 +155,9 @@ public class Scheduler {
         int column = 0;
         for (int i = 0; i < rawCandlestickList.size(); i++){
             rawCandlestick = rawCandlestickList.get(i);
+            if (i == rawCandlestickList.size() -1) {
+                log.info("Last date used for prediction:" + rawCandlestick.getRawCandlestickKey().getDateTime());
+            }
 
             for (String indicatorName : predictionIndicators) {
                 FxIndicator indicator = new FxIndicator(indicatorName,

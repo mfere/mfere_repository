@@ -13,4 +13,13 @@ public enum ActionType {
     SELL(3);   // Only sell take profit will trigger
 
     private int value;
+
+    public static ActionType getActionType(int value) {
+        for (ActionType actionType : ActionType.values()) {
+            if (actionType.getValue() == value) {
+                return actionType;
+            }
+        }
+        return null;
+    }
 }
