@@ -196,7 +196,7 @@ public class IndicatorFactory {
             case SMA_100_CLOSE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.SMA_100_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
             case SMA_100_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.SMA_100_DIFF_WITH_YESTERDAY), candleId);
+                return differenceWithYesterday(indicators.get(IndicatorType.SMA_100_RAW), candleId);
 
 
             // SMA 200
@@ -220,7 +220,7 @@ public class IndicatorFactory {
             case SMA_200_CLOSE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.SMA_200_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
             case SMA_200_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.SMA_200_DIFF_WITH_YESTERDAY), candleId);
+                return differenceWithYesterday(indicators.get(IndicatorType.SMA_200_RAW), candleId);
 
 
             // MACD
@@ -311,6 +311,10 @@ public class IndicatorFactory {
 
 
             // stochastic oscillator
+            case STOCHASTIC_OSCILLATOR_D_RAW:
+                return indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_D_RAW).getValue(candleId).toDouble();
+            case STOCHASTIC_OSCILLATOR_K_RAW:
+                return indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_K_RAW).getValue(candleId).toDouble();
             case STOCHASTIC_OSCILLATOR_K_ABOVE_OR_BELOW_D:
                 return closeAboveOrBelow(indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_K_RAW),
                         indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_D_RAW), candleId);

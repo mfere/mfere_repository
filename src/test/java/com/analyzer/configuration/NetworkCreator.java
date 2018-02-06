@@ -34,7 +34,7 @@ public class NetworkCreator {
         double learningRate = 0.1;
         int numInputs = 2; // This will be overwritten
         int numOutputs = 2; // This will be overwritten
-        int numHiddenNodes = 20;
+        int numHiddenNodes = 10;
 
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -69,7 +69,7 @@ public class NetworkCreator {
     public void create3LayerNetwork() {
         String networkName = "3layerNetwork";
         int seed = 123;
-        double learningRate = 0.1;
+        double learningRate = 0.1; // This will be overwritten
         int numInputs = 2; // This will be overwritten
         int numOutputs = 2; // This will be overwritten
         int numHiddenNodes = 20;
@@ -79,6 +79,7 @@ public class NetworkCreator {
                 .seed(seed)
                 .biasInit(1)
                 .regularization(true).l2(1e-4)
+                .learningRateScoreBasedDecayRate(0.9)
                 .iterations(1)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(learningRate)

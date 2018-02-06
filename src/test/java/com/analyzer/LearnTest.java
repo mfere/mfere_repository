@@ -19,9 +19,11 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnDaily() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setStrategy(StrategyType.S_TAKE_PROFIT_005_24.name());
+        form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
         form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_100.name());
-        form.setName("SD_EUR_USD");
+        form.setName("D_EUR_USD");
+        form.setBatchNumber(1);
+        form.setLearningRate(0.0001);
         form.setInstrument(InstrumentValue.EUR_USD.name());
         checkLearn(form);
     }
@@ -59,7 +61,11 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnRelative() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setNormalizer(NormalizerType.MIN_MAX.name());
+        form.setNormalizer(NormalizerType.STANDARD.name());
+        form.setStrategy(StrategyType.BS_TAKE_PROFIT_001_24.name());
+        form.setBatchNumber(5);
+        form.setLearningRate(0.1);
+        form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
         form.setIndicators(getRelativeIndicators());
 
         ResponseEntity<String> response = template.postForEntity(
@@ -71,15 +77,15 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testConvergance() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setStrategy(StrategyType.B_TAKE_PROFIT_005_24.name());
-        form.setIndicators(getAbsoluteIndicators());
+        form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
+        form.setIndicators(getRelativeIndicators());
         form.setTrainFromDate("2010-01-04 00:00:00");
-        form.setTrainToDate("2010-01-31 00:00:00");
+        form.setTrainToDate("2010-06-31 00:00:00");
         form.setName("D_EUR_USD");
         form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
-        form.setBatchNumber(1);
-        form.setLearningRate(0.001);
-        //form.setNormalizer(NormalizerType.STANDARD.name());
+        form.setBatchNumber(2);
+        form.setLearningRate(0.1);
+        form.setNormalizer(NormalizerType.STANDARD.name());
         form.setStopCondition(StopConditionType.FIXED_EPOC_LENGTH_10000.name());
         checkLearn(form);
     }
@@ -117,6 +123,5 @@ public class LearnTest extends ApplicationTest {
         form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
         return form;
     }
-
 
 }

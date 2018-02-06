@@ -59,6 +59,7 @@ public class EnricherTest extends ApplicationTest {
     @Test
     public void testEnrichAll() {
         EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
+        enrichRequestForm.setGranularity(GranularityType.H1.name());
 
         enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
         checkEnrichResponse(enrichRequestForm);

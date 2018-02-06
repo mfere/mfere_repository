@@ -74,9 +74,15 @@ public class ApplicationTest {
 
     @Test
     public void testAll() throws Exception {
-        new ReaderTest().testReadAll();
-        new EnricherTest().testEnrichAll();
-        new LearnTest().testLearnAll();
+        ReaderTest readerTest = new ReaderTest();
+        readerTest.setUp();
+        readerTest.testReadAll();
+        EnricherTest enricherTest = new EnricherTest();
+        enricherTest.setUp();
+        enricherTest.testEnrichAll();
+        LearnTest learnTest = new LearnTest();
+        learnTest.setUp();
+        learnTest.testLearnAll();
     }
 
     @Test
@@ -127,10 +133,33 @@ public class ApplicationTest {
 
         indicators.add(IndicatorType.MACD_RAW.name());
         indicators.add(IndicatorType.VOLUME_RAW.name());
+        indicators.add(IndicatorType.SMA_5_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.SMA_10_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.SMA_50_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.SMA_100_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.SMA_200_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.MACD_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.RSI_DIFF_WITH_YESTERDAY.name());
+
+        indicators.add(IndicatorType.BOLLINGER_BAND_LOWER_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.BOLLINGER_BAND_UPPER_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.BOLLINGER_BAND_MIDDLE_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.BOLLINGER_BAND_WIDTH_DIFF_WITH_YESTERDAY.name());
+
+        indicators.add(IndicatorType.STOCHASTIC_OSCILLATOR_K_RAW.name());
+        indicators.add(IndicatorType.STOCHASTIC_OSCILLATOR_D_RAW.name());
+
+        indicators.add(IndicatorType.STOCHASTIC_OSCILLATOR_K_DIFF_WITH_YESTERDAY.name());
+        indicators.add(IndicatorType.STOCHASTIC_OSCILLATOR_D_DIFF_WITH_YESTERDAY.name());
+
+        indicators.add(IndicatorType.IS_YESTERDAY_HOLIDAY.name());
+        indicators.add(IndicatorType.IS_TOMORROW_HOLIDAY.name());
+
         indicators.add(IndicatorType.SMA_5_CLOSE_DIFF.name());
         indicators.add(IndicatorType.SMA_10_CLOSE_DIFF.name());
         indicators.add(IndicatorType.SMA_50_CLOSE_DIFF.name());
         indicators.add(IndicatorType.RSI_RAW.name());
+
         indicators.add(IndicatorType.BOLLINGER_BAND_WIDTH_RAW.name());
         indicators.add(IndicatorType.BOLLINGER_BAND_LOWER_DIFF.name());
         indicators.add(IndicatorType.BOLLINGER_BAND_UPPER_DIFF.name());
