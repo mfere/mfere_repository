@@ -4,7 +4,6 @@ import com.analyzer.constants.*;
 import com.analyzer.enricher.strategy.StrategyFactory;
 import com.analyzer.learner.stopcondition.StopCondition;
 import com.analyzer.learner.stopcondition.StopConditionFactory;
-import com.analyzer.model.FxIndicator;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReadRequestForm;
@@ -26,7 +25,6 @@ import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.stats.StatsListener;
 import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 import org.deeplearning4j.util.ModelSerializer;
-import org.jetbrains.annotations.NotNull;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
@@ -181,14 +179,17 @@ public class LearnerController {
 
             model = stopCondition.getBestConfiguration();
             log.info("Evaluate train model....");
-            evaluateModel(testIterator, model, numOutputs);
+            Evaluation eval = evaluateModel(testIterator, model, numOutputs);
+            log.info(eval.stats());
             log.info("Evaluate validation models...");
-            evaluateModel(validateIterator, model, numOutputs);
+            eval = evaluateModel(validateIterator, model, numOutputs);
+            log.info(eval.stats());
             log.info("Evaluate test model....");
-            Evaluation testEval = evaluateModel(testIterator, model, numOutputs);
+            eval = evaluateModel(testIterator, model, numOutputs);
+            log.info(eval.stats());
 
             // Save the models
-            int score = (int) (testEval.f1()*10000);
+            int score = (int) (eval.f1()*10000);
             String filePath = trainedNetworksPath+"/" + (new Date().getTime())+"_"+learnerRequestForm.getName()+"_"+score;
             ModelSerializer.writeModel(model, filePath + ".model",true);
             if (normalizer != null) {
@@ -320,7 +321,6 @@ public class LearnerController {
             INDArray predicted = model.output(features,false);
             eval.eval(labels, predicted);
         }
-        log.info(eval.stats());
         return eval;
     }
 
