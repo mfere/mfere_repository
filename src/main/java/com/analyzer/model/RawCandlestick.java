@@ -107,13 +107,9 @@ public class RawCandlestick implements Persistable {
 
     // First column is always reward function
     public String toCsvLine(StrategyType strategyType,
-                            List<IndicatorType> indicatorTypes,
-                            boolean testConvergence) throws Exception {
+                            List<IndicatorType> indicatorTypes) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         boolean found = false;
-
-        //stringBuilder.append(getRawCandlestickKey().dateTime);
-        //stringBuilder.append(",");
 
         if (actionStrategies != null) {
             for (ActionStrategy actionStrategy : actionStrategies) {
@@ -124,10 +120,6 @@ public class RawCandlestick implements Persistable {
                         stringBuilder.append(actionStrategy.getActionTypeValue() > 0 ? 1 : 0);
                     }
                     found = true;
-                    if (testConvergence) {
-                        stringBuilder.append(",");
-                        stringBuilder.append(actionStrategy.getActionTypeValue());
-                    }
                     break;
                 }
 
@@ -141,19 +133,6 @@ public class RawCandlestick implements Persistable {
                     + getRawCandlestickKey().getDateTime().toString());
 
         }
-
-        // Add mid high, low, start, end and volume as standard values
-        /*stringBuilder.append(",");
-        stringBuilder.append(midRawCandlestickData.getHigh());
-        stringBuilder.append(",");
-        stringBuilder.append(midRawCandlestickData.getLow());
-        stringBuilder.append(",");
-        stringBuilder.append(midRawCandlestickData.getOpen());
-        stringBuilder.append(",");
-        stringBuilder.append(midRawCandlestickData.getClose());*/
-        //stringBuilder.append(",");
-        //stringBuilder.append(volume);
-
         if (fxIndicators != null) {
             for (IndicatorType indicatorType : indicatorTypes) {
                 found = false;

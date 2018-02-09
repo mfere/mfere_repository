@@ -20,7 +20,7 @@ public class LearnTest extends ApplicationTest {
     public void testLearnDaily() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
         form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
-        form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_100.name());
+        form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_1000.name());
         form.setName("D_EUR_USD");
         form.setBatchNumber(1);
         form.setLearningRate(0.0001);
@@ -61,9 +61,10 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnRelative() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setNormalizer(NormalizerType.STANDARD.name());
-        form.setStrategy(StrategyType.BS_TAKE_PROFIT_001_24.name());
-        form.setBatchNumber(5);
+        form.setStopCondition(StopConditionType.BEST_VALIDATION_SCORE_LAST_10000.name());
+        form.setNormalizer(NormalizerType.MIN_MAX.name());
+        form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
+        form.setBatchNumber(1);
         form.setLearningRate(0.1);
         form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
         form.setIndicators(getRelativeIndicators());
@@ -79,13 +80,13 @@ public class LearnTest extends ApplicationTest {
         LearnerRequestForm form = createBaseLearnerRequestForm();
         form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
         form.setIndicators(getRelativeIndicators());
-        form.setTrainFromDate("2010-01-04 00:00:00");
-        form.setTrainToDate("2010-06-31 00:00:00");
+        form.setTrainFromDate("2011-01-04 00:00:00");
+        form.setTrainToDate("2011-06-31 00:00:00");
         form.setName("D_EUR_USD");
         form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
-        form.setBatchNumber(2);
+        form.setBatchNumber(1);
         form.setLearningRate(0.1);
-        form.setNormalizer(NormalizerType.STANDARD.name());
+        form.setNormalizer(NormalizerType.MIN_MAX.name());
         form.setStopCondition(StopConditionType.FIXED_EPOC_LENGTH_10000.name());
         checkLearn(form);
     }
@@ -107,9 +108,11 @@ public class LearnTest extends ApplicationTest {
     public LearnerRequestForm createBaseLearnerRequestForm() throws Exception{
         LearnerRequestForm form = new LearnerRequestForm();
         form.setName("D_EUR_USD");
-        form.setTrainFromDate("2010-01-04 00:00:00");
+        form.setTrainFromDate("2010-06-04 00:00:00");
         form.setTrainToDate("2015-12-31 00:00:00");
-        form.setTestFromDate("2016-01-04 00:00:00");
+        form.setValidateFromDate("2016-01-04 00:00:00");
+        form.setValidateToDate("2017-01-31 00:00:00");
+        form.setTestFromDate("2017-01-04 00:00:00");
         form.setTestToDate("2018-01-31 00:00:00");
         form.setGranularity(GranularityType.D.name());
         form.setInstrument(InstrumentValue.EUR_USD.name());
@@ -119,7 +122,6 @@ public class LearnTest extends ApplicationTest {
         form.setBatchNumber(50);
         form.setLearningRate(0.001);
         form.setNormalizer(NormalizerType.MIN_MAX.name());
-        form.setTestConvergance(false);
         form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
         return form;
     }

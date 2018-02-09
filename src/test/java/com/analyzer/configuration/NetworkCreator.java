@@ -79,7 +79,7 @@ public class NetworkCreator {
                 .seed(seed)
                 .biasInit(1)
                 .regularization(true).l2(1e-4)
-                .learningRateScoreBasedDecayRate(0.9)
+                .learningRateScoreBasedDecayRate(0.5)
                 .iterations(1)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(learningRate)
@@ -120,7 +120,7 @@ public class NetworkCreator {
                 .iterations(1)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(learningRate)
-                .updater(Updater.NESTEROVS)
+                .updater(Updater.ADAM)
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenNodes)
                         .weightInit(WeightInit.XAVIER)
@@ -132,7 +132,7 @@ public class NetworkCreator {
                         .build())
                 .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .weightInit(WeightInit.XAVIER)
-                        .activation(Activation.SOFTMAX)
+                        .activation(Activation.RELU)
                         .nIn(numHiddenNodes).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 

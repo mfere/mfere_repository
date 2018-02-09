@@ -1,31 +1,31 @@
 package com.analyzer.learner.stopcondition;
 
+import com.analyzer.learner.LearnerController;
 import org.deeplearning4j.eval.Evaluation;
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
-import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BestF1Score implements StopCondition {
+public class BestPrecisionScore implements StopCondition {
 
-    private static final Logger log = LoggerFactory.getLogger(BestF1Score.class);
+    private static final Logger log = LoggerFactory.getLogger(BestPrecisionScore.class);
 
     private int maxNoChangeIteration;
     private int checkIteration;
     private int iterationNumber;
     private int noChangeIterationNumber;
     private MultiLayerNetwork model;
-    private Double bestScore = null;
+    private Double bestScore;
     private DataSetIterator dataIterator;
     private int labelsLength;
     private MultiLayerNetwork bestConfiguration;
 
-    BestF1Score(int checkIteration, int maxNoChangeIteration, MultiLayerNetwork model,
-                DataSetIterator dataIterator) {
+    BestPrecisionScore(int checkIteration,
+                       int maxNoChangeIteration,
+                       MultiLayerNetwork model,
+                       DataSetIterator dataIterator,
+                       int numOutput) {
         this.checkIteration = checkIteration;
         this.model = model;
         this.bestScore = null;
@@ -33,7 +33,7 @@ public class BestF1Score implements StopCondition {
         this.noChangeIterationNumber = 0;
         this.maxNoChangeIteration = maxNoChangeIteration;
         this.dataIterator = dataIterator;
-        this.labelsLength = dataIterator.next().getLabels().length();
+        this.labelsLength = numOutput;
     }
 
     @Override
@@ -43,27 +43,19 @@ public class BestF1Score implements StopCondition {
             return false;
         }
 
-        dataIterator.reset();
-        Evaluation eval = new Evaluation(labelsLength);
-        while(dataIterator.hasNext()){
-            DataSet t = dataIterator.next();
-            INDArray features = t.getFeatureMatrix();
-            INDArray labels = t.getLabels();
-            INDArray predicted = model.output(features,false);
-            eval.eval(labels, predicted);
-        }
+        Evaluation eval = LearnerController.evaluateModel(dataIterator, model, labelsLength);
         if (this.bestScore == null) {
-            this.bestScore = eval.f1() > 0 ? eval.f1() : null;
-            log.info("Found new best f1score models: " + this.bestScore);
+            this.bestScore = eval.precision() > 0 ? eval.precision() : null;
+            log.info("Found new best precision score: " + this.bestScore);
             bestConfiguration = model.clone();
         } else {
-            if (eval.f1() > this.bestScore) {
-                this.bestScore = eval.f1();
-                log.info("Found new best f1score models: " + this.bestScore);
+            if (eval.precision() > this.bestScore) {
+                this.bestScore = eval.precision();
+                log.info("Found new best precision score: " + this.bestScore);
             } else {
                 noChangeIterationNumber++;
                 if (noChangeIterationNumber == maxNoChangeIteration) {
-                    log.info("Finishing using models with f1score: " + eval.f1());
+                    log.info("Finishing using models with precision score: " + eval.precision());
                     return true;
                 }
             }

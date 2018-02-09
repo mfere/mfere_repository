@@ -132,13 +132,16 @@ public class ApplicationTest {
         List<String> indicators = new ArrayList<>();
 
         indicators.add(IndicatorType.MACD_RAW.name());
+        indicators.add(IndicatorType.MACD_DIFF_WITH_YESTERDAY.name());
         indicators.add(IndicatorType.VOLUME_RAW.name());
         indicators.add(IndicatorType.SMA_5_DIFF_WITH_YESTERDAY.name());
         indicators.add(IndicatorType.SMA_10_DIFF_WITH_YESTERDAY.name());
         indicators.add(IndicatorType.SMA_50_DIFF_WITH_YESTERDAY.name());
-        indicators.add(IndicatorType.SMA_100_DIFF_WITH_YESTERDAY.name());
-        indicators.add(IndicatorType.SMA_200_DIFF_WITH_YESTERDAY.name());
-        indicators.add(IndicatorType.MACD_DIFF_WITH_YESTERDAY.name());
+        //indicators.add(IndicatorType.SMA_100_DIFF_WITH_YESTERDAY.name());
+        //indicators.add(IndicatorType.SMA_200_DIFF_WITH_YESTERDAY.name());
+
+
+        indicators.add(IndicatorType.RSI_RAW.name());
         indicators.add(IndicatorType.RSI_DIFF_WITH_YESTERDAY.name());
 
         indicators.add(IndicatorType.BOLLINGER_BAND_LOWER_DIFF_WITH_YESTERDAY.name());
@@ -158,12 +161,13 @@ public class ApplicationTest {
         indicators.add(IndicatorType.SMA_5_CLOSE_DIFF.name());
         indicators.add(IndicatorType.SMA_10_CLOSE_DIFF.name());
         indicators.add(IndicatorType.SMA_50_CLOSE_DIFF.name());
-        indicators.add(IndicatorType.RSI_RAW.name());
+
 
         indicators.add(IndicatorType.BOLLINGER_BAND_WIDTH_RAW.name());
         indicators.add(IndicatorType.BOLLINGER_BAND_LOWER_DIFF.name());
         indicators.add(IndicatorType.BOLLINGER_BAND_UPPER_DIFF.name());
         indicators.add(IndicatorType.BOLLINGER_BAND_MIDDLE_DIFF.name());
+
         return indicators;
     }
 
