@@ -37,6 +37,7 @@ public class LearnerRequestForm {
     private Double learningRate;
     private String stopCondition;
     private String normalizer;
+    private boolean shuffleData = true;
 
     private Integer batchNumber = 50;
 

@@ -34,7 +34,7 @@ public class NetworkCreator {
         double learningRate = 0.1;
         int numInputs = 2; // This will be overwritten
         int numOutputs = 2; // This will be overwritten
-        int numHiddenNodes = 10;
+        int numHiddenNodes = 100;
 
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -115,10 +115,10 @@ public class NetworkCreator {
 
     public void createNetwork(String networkName) {
         int seed = 123;
-        double learningRate = 0.001;
+        double learningRate = 0.01;
         int numInputs = 2; // This will be overwritten
         int numOutputs = 2; // This will be overwritten
-        int numHiddenNodes = 50;
+        int numHiddenNodes = 500;
 
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -135,15 +135,23 @@ public class NetworkCreator {
                         .weightInit(WeightInit.XAVIER)
                         .activation(Activation.RELU)  // PREVENTS LOCAL MINIMUM WITH MORE THAN 1 BATCH
                         .build())
-                .layer(1, new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes)
+                .layer(1, new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes/2)
                         .weightInit(WeightInit.XAVIER)
                         .activation(Activation.RELU) // PREVENTS LOCAL MINIMUM WITH MORE THAN 1 BATCH
                         .build())
-                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE) // NORMAL CASE
+                .layer(2, new DenseLayer.Builder().nIn(numHiddenNodes/2).nOut(numHiddenNodes/5)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.RELU) // PREVENTS LOCAL MINIMUM WITH MORE THAN 1 BATCH
+                        .build())
+                .layer(3, new DenseLayer.Builder().nIn(numHiddenNodes/5).nOut(numHiddenNodes/10)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.RELU) // PREVENTS LOCAL MINIMUM WITH MORE THAN 1 BATCH
+                        .build())
+                .layer(4, new OutputLayer.Builder(LossFunctions.LossFunction.MSE) // NORMAL CASE
                 //.layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY) // NO CONVERGENCE
                         .weightInit(WeightInit.XAVIER)
                         .activation(Activation.SOFTMAX)
-                        .nIn(numHiddenNodes).nOut(numOutputs).build())
+                        .nIn(numHiddenNodes/10).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 
         System.out.println(conf.toJson());

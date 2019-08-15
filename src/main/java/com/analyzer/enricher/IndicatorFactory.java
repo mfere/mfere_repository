@@ -634,6 +634,10 @@ public class IndicatorFactory {
         LocalDate prevDateCandle = today;
         // get the next date time
         for (int i = candleId ;i >= 0 ; i--) {
+            // Assume is not holiday if there is no previous value
+            if (rawCandlestickList.get(i).getPrevDateTime() == null) {
+                return TrainingValue.INDICATOR_NOT_EXIST.getValue();
+            }
             prevDateCandle = rawCandlestickList.get(i).getPrevDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
             if (!today.isEqual(prevDateCandle)) {
                 break;

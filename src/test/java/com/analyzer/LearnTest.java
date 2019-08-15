@@ -63,12 +63,8 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnRelative() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setStopCondition(StopConditionType.BEST_VALIDATION_SCORE_LAST_50000.name());
-        form.setNormalizer(NormalizerType.MIN_MAX.name());
+        form.setStopCondition(StopConditionType.BEST_VALIDATION_SCORE_LAST_1000.name());
         form.setStrategy(StrategyType.B_TAKE_PROFIT_001_24.name());
-        form.setGranularity(GranularityType.D.name());
-        form.setBatchNumber(1);
-        form.setLearningRate(0.1);
         form.setNetworkConfiguration(readNetworkConfiguration(NETWORK_NAME));
         form.setIndicators(getRelativeIndicators());
 
@@ -84,19 +80,12 @@ public class LearnTest extends ApplicationTest {
         form.setStrategy(StrategyType.B_TAKE_PROFIT_005_24.name());
         form.setIndicators(getRelativeIndicators());
         form.setTrainFromDate("2011-01-04 00:00:00");
-        form.setTrainToDate("2011-06-31 00:00:00");
+        form.setTrainToDate("2012-06-31 00:00:00");
         form.setName("D_EUR_USD");
-        List<String> watchInstruments = new ArrayList<>();
-        for (InstrumentValue instrumentValue : InstrumentValue.values()) {
-            watchInstruments.add(instrumentValue.name());
-        }
-        form.setWatchInstruments(watchInstruments);
-        form.setPastValuesNumber(1);
         form.setNetworkConfiguration(readNetworkConfiguration(NETWORK_NAME));
         form.setBatchNumber(1);
         form.setLearningRate(0.1);
-        form.setNormalizer(NormalizerType.MIN_MAX.name());
-        form.setStopCondition(StopConditionType.FIXED_EPOC_LENGTH_10000.name());
+        form.setStopCondition(StopConditionType.FIXED_EPOC_LENGTH_2000.name());
         checkLearn(form);
     }
 
@@ -120,14 +109,21 @@ public class LearnTest extends ApplicationTest {
         form.setTrainFromDate("2010-06-04 00:00:00");
         form.setTrainToDate("2015-12-31 00:00:00");
         form.setValidateFromDate("2016-01-04 00:00:00");
-        form.setValidateToDate("2017-01-31 00:00:00");
-        form.setTestFromDate("2017-01-04 00:00:00");
-        form.setTestToDate("2018-01-31 00:00:00");
+        form.setValidateToDate("2017-12-31 00:00:00");
+        form.setTestFromDate("2018-01-04 00:00:00");
+        form.setTestToDate("2019-08-13 00:00:00");
+        List<String> watchInstruments = new ArrayList<>();
+        for (InstrumentValue instrumentValue : InstrumentValue.values()) {
+            watchInstruments.add(instrumentValue.name());
+        }
+        form.setWatchInstruments(watchInstruments);
         form.setGranularity(GranularityType.D.name());
         form.setInstrument(InstrumentValue.EUR_USD.name());
         form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
         form.setStopCondition(StopConditionType.LEAST_ERROR_LAST_100.name());
-        form.setIndicators(getAbsoluteIndicators());
+        form.setIndicators(getRelativeIndicators());
+        form.setPastValuesNumber(3);
+        form.setShuffleData(true);
         form.setBatchNumber(50);
         form.setLearningRate(0.001);
         form.setNormalizer(NormalizerType.MIN_MAX.name());

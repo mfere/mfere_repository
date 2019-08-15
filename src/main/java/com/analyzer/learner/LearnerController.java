@@ -96,7 +96,7 @@ public class LearnerController {
                     ReaderUtil.parse(learnerRequestForm.getTrainFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
                     ReaderUtil.parse(learnerRequestForm.getTrainToDate(),ReadRequestForm.DATE_TIME_PATTERN),
                     granularity, instrument, strategyType, indicatorTypes, watchInstruments,
-                    learnerRequestForm.getPastValuesNumber(), true);
+                    learnerRequestForm.getPastValuesNumber(), learnerRequestForm.isShuffleData());
             RecordReader rrTrain = new CSVRecordReader();
             rrTrain.initialize(new FileSplit(new File(tmpTrainFile.getAbsolutePath())));
             log.info("saved train temporary file: "+tmpTrainFile.getAbsolutePath());
@@ -177,9 +177,8 @@ public class LearnerController {
                 while(trainIterator.hasNext())
                 {
                     DataSet next = trainIterator.next();
-                    next.shuffle(seed++);
-                    if (seed == Integer.MAX_VALUE) {
-                        seed = 1000;
+                    if (learnerRequestForm.isShuffleData()) {
+                        next.shuffle(seed);
                     }
                     model.fit(next);
                 }
@@ -275,7 +274,7 @@ public class LearnerController {
             writer = new FileWriter(file);
             printWriter = new PrintWriter(writer);
 
-            log.info("saved train temporary file: "+file.getAbsolutePath());
+            log.info("creating temporary file: "+file.getAbsolutePath());
             List<FxLearnData> fxLearnDataList = new ArrayList<>();
             RawCandlestick mainInstrumentRawCandlestick = findRawCandleStick(
                     fromDate,
@@ -355,8 +354,8 @@ public class LearnerController {
                             // Drop oldest historical data
                             watchPreviousCandleStick.removeLast();
                         } catch (Exception e) {
-                            log.info("Using previous date values for date " + nextDateTime +
-                                    ", instrument: " + instrument +
+                            log.debug("Using previous date values for date " + nextDateTime +
+                                    ", instrument: " + watchedInstrument +
                                     ", granularity: " + granularity);
                         }
 
@@ -424,7 +423,7 @@ public class LearnerController {
         return prevRawCandlesticks;
     }
 
-    public RawCandlestick findRawCandleStick(Instant date, GranularityType granularity, InstrumentValue instrument)
+    private RawCandlestick findRawCandleStick(Instant date, GranularityType granularity, InstrumentValue instrument)
         throws Exception{
         RawCandlestick rawCandlestick = rawCandlestickRepository.findOne(
                 date,

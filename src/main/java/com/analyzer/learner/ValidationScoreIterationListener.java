@@ -56,7 +56,7 @@ public class ValidationScoreIterationListener implements IterationListener {
                 eval.eval(labels, predicted);
             }
             double result = eval.f1();
-            log.info("Score on validation at " + iterCount + " is " + result);
+            log.info("F1 Score on validation at " + iterCount + " is " + result);
         }
         iterCount++;
     }

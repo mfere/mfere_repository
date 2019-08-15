@@ -103,7 +103,8 @@ public class EnricherTest extends ApplicationTest {
 
     private EnrichRequestForm createBaseEnrichForm() {
         EnrichRequestForm enrichRequestForm = new EnrichRequestForm();
-        enrichRequestForm.setFromDate("2010-01-01 00:00:00");
+        enrichRequestForm.setFromDate("2010-01-02 00:00:00");
+        enrichRequestForm.setToDate("2019-08-14 00:00:00");
         enrichRequestForm.setGranularity(GranularityType.D.name());
         List<String> indicators = new ArrayList<>();
         List<IndicatorType> indicatorTypeList = new ArrayList<>(Arrays.asList(IndicatorType.values()));
