@@ -6,7 +6,6 @@ import com.analyzer.enricher.action.Action;
 import com.analyzer.model.ActionStrategy;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
-import com.oanda.v20.primitives.InstrumentType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.nd4j.linalg.api.ndarray.INDArray;

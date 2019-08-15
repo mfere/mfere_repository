@@ -7,9 +7,9 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BestPrecisionScore implements StopCondition {
+public class BestScore implements StopCondition {
 
-    private static final Logger log = LoggerFactory.getLogger(BestPrecisionScore.class);
+    private static final Logger log = LoggerFactory.getLogger(BestScore.class);
 
     private int maxNoChangeIteration;
     private int checkIteration;
@@ -21,11 +21,11 @@ public class BestPrecisionScore implements StopCondition {
     private int labelsLength;
     private MultiLayerNetwork bestConfiguration;
 
-    BestPrecisionScore(int checkIteration,
-                       int maxNoChangeIteration,
-                       MultiLayerNetwork model,
-                       DataSetIterator dataIterator,
-                       int numOutput) {
+    BestScore(int checkIteration,
+              int maxNoChangeIteration,
+              MultiLayerNetwork model,
+              DataSetIterator dataIterator,
+              int numOutput) {
         this.checkIteration = checkIteration;
         this.model = model;
         this.bestScore = null;
@@ -45,17 +45,18 @@ public class BestPrecisionScore implements StopCondition {
 
         Evaluation eval = LearnerController.evaluateModel(dataIterator, model, labelsLength);
         if (this.bestScore == null) {
-            this.bestScore = eval.precision() > 0 ? eval.precision() : null;
-            log.info("Found new best precision score: " + this.bestScore);
+            this.bestScore = eval.f1() > 0 ? eval.f1() : null;
+            log.info("Found new best f1 score: " + this.bestScore);
             bestConfiguration = model.clone();
         } else {
-            if (eval.precision() > this.bestScore) {
-                this.bestScore = eval.precision();
-                log.info("Found new best precision score: " + this.bestScore);
+            if (eval.f1() > this.bestScore) {
+                this.bestScore = eval.f1();
+                bestConfiguration = model.clone();
+                log.info("Found new best f1 score: " + this.bestScore);
             } else {
                 noChangeIterationNumber++;
                 if (noChangeIterationNumber == maxNoChangeIteration) {
-                    log.info("Finishing using models with precision score: " + eval.precision());
+                    log.info("Finishing using models with f1 score: " + eval.f1());
                     return true;
                 }
             }

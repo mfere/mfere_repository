@@ -74,7 +74,6 @@ public class NetworkCreator {
         int numOutputs = 2; // This will be overwritten
         int numHiddenNodes = 20;
 
-
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(seed)
                 .biasInit(1)
@@ -83,17 +82,22 @@ public class NetworkCreator {
                 .iterations(1)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(learningRate)
-                .updater(Updater.NESTEROVS)
+                //.updater(Updater.NESTEROVS)
+                .updater(Updater.ADAM)
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenNodes)
                         .weightInit(WeightInit.XAVIER)
-                        .activation(Activation.RELU)
+                        .activation(Activation.LEAKYRELU)
                         .build())
                 .layer(1, new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes)
                         .weightInit(WeightInit.XAVIER)
-                        .activation(Activation.RELU)
+                        .activation(Activation.LEAKYRELU)
                         .build())
-                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                .layer(2, new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.LEAKYRELU)
+                        .build())
+                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .weightInit(WeightInit.XAVIER)
                         .activation(Activation.SOFTMAX)
                         .nIn(numHiddenNodes).nOut(numOutputs).build())
@@ -106,6 +110,10 @@ public class NetworkCreator {
     @Test
     public void create3Layer50HiddenNetwork() {
         String networkName = "3layer50HiddenNetwork";
+        createNetwork(networkName);
+    }
+
+    public void createNetwork(String networkName) {
         int seed = 123;
         double learningRate = 0.001;
         int numInputs = 2; // This will be overwritten
@@ -116,30 +124,31 @@ public class NetworkCreator {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(seed)
                 .biasInit(1)
-                .regularization(true).l2(1e-4)
+                .regularization(true).l2(1e-4) // FASTER LEARNING
+                .learningRateScoreBasedDecayRate(0.9) // FASTER LEARNING
                 .iterations(1)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(learningRate)
-                .updater(Updater.ADAM)
+                .updater(Updater.ADAM)  // AVOID OVERFITTING AND PREVENTS LOCAL MINIMUM WITH MORE THAN 1 BATCH
                 .list()
                 .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenNodes)
                         .weightInit(WeightInit.XAVIER)
-                        .activation(Activation.RELU)
+                        .activation(Activation.RELU)  // PREVENTS LOCAL MINIMUM WITH MORE THAN 1 BATCH
                         .build())
                 .layer(1, new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes)
                         .weightInit(WeightInit.XAVIER)
-                        .activation(Activation.RELU)
+                        .activation(Activation.RELU) // PREVENTS LOCAL MINIMUM WITH MORE THAN 1 BATCH
                         .build())
-                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE) // NORMAL CASE
+                //.layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY) // NO CONVERGENCE
                         .weightInit(WeightInit.XAVIER)
-                        .activation(Activation.RELU)
+                        .activation(Activation.SOFTMAX)
                         .nIn(numHiddenNodes).nOut(numOutputs).build())
                 .pretrain(false).backprop(true).build();
 
         System.out.println(conf.toJson());
         writeToFile(networkName, conf);
     }
-
 
 
     private void writeToFile(String networkName, MultiLayerConfiguration conf) {

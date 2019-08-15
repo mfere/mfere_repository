@@ -59,20 +59,11 @@ public class EnricherTest extends ApplicationTest {
     @Test
     public void testEnrichAll() {
         EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
-        enrichRequestForm.setGranularity(GranularityType.H1.name());
-
-        enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
-        checkEnrichResponse(enrichRequestForm);
-
-        enrichRequestForm.setInstrument(InstrumentValue.EUR_USD.name());
-        checkEnrichResponse(enrichRequestForm);
-
-        enrichRequestForm.setInstrument(InstrumentValue.GBP_USD.name());
-        checkEnrichResponse(enrichRequestForm);
-
-        enrichRequestForm.setInstrument(InstrumentValue.USD_JPY.name());
-        checkEnrichResponse(enrichRequestForm);
-
+        enrichRequestForm.setGranularity(GranularityType.D.name());
+        for (InstrumentValue instrumentValue : InstrumentValue.values()) {
+            enrichRequestForm.setInstrument(instrumentValue.name());
+            checkEnrichResponse(enrichRequestForm);
+        }
     }
 
     @Test
@@ -112,8 +103,7 @@ public class EnricherTest extends ApplicationTest {
 
     private EnrichRequestForm createBaseEnrichForm() {
         EnrichRequestForm enrichRequestForm = new EnrichRequestForm();
-        enrichRequestForm.setFromDate("2010-01-04 00:00:00");
-        enrichRequestForm.setToDate("2018-02-03 00:00:00");
+        enrichRequestForm.setFromDate("2010-01-01 00:00:00");
         enrichRequestForm.setGranularity(GranularityType.D.name());
         List<String> indicators = new ArrayList<>();
         List<IndicatorType> indicatorTypeList = new ArrayList<>(Arrays.asList(IndicatorType.values()));

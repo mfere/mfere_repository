@@ -4,6 +4,7 @@ import com.analyzer.constants.*;
 import com.analyzer.enricher.strategy.StrategyFactory;
 import com.analyzer.learner.stopcondition.StopCondition;
 import com.analyzer.learner.stopcondition.StopConditionFactory;
+import com.analyzer.model.FxLearnData;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
 import com.analyzer.reader.ReadRequestForm;
@@ -41,10 +42,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.io.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @RestController
 public class LearnerController {
@@ -86,6 +84,10 @@ public class LearnerController {
             for (String indicatorName : learnerRequestForm.getIndicators()) {
                 indicatorTypes.add(IndicatorType.valueOf(indicatorName));
             }
+            List<InstrumentValue> watchInstruments = new ArrayList<>();
+            for (String watchInstrumentName : learnerRequestForm.getWatchInstruments()) {
+                watchInstruments.add(InstrumentValue.valueOf(watchInstrumentName));
+            }
 
             // TRAIN DATA CREATION
             tmpTrainFile = File.createTempFile("train_"+new Date().getTime(), ".csv");
@@ -93,7 +95,8 @@ public class LearnerController {
                     tmpTrainFile,
                     ReaderUtil.parse(learnerRequestForm.getTrainFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
                     ReaderUtil.parse(learnerRequestForm.getTrainToDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    granularity, instrument, strategyType, indicatorTypes, true);
+                    granularity, instrument, strategyType, indicatorTypes, watchInstruments,
+                    learnerRequestForm.getPastValuesNumber(), true);
             RecordReader rrTrain = new CSVRecordReader();
             rrTrain.initialize(new FileSplit(new File(tmpTrainFile.getAbsolutePath())));
             log.info("saved train temporary file: "+tmpTrainFile.getAbsolutePath());
@@ -104,7 +107,8 @@ public class LearnerController {
                     tmpValidateFile,
                     ReaderUtil.parse(learnerRequestForm.getValidateFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
                     ReaderUtil.parse(learnerRequestForm.getValidateToDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    granularity, instrument, strategyType, indicatorTypes, false);
+                    granularity, instrument, strategyType, indicatorTypes, watchInstruments,
+                    learnerRequestForm.getPastValuesNumber(), false);
             RecordReader rrValidate = new CSVRecordReader();
             rrValidate.initialize(new FileSplit(new File(tmpValidateFile.getAbsolutePath())));
             log.info("saved validation temporary file: "+tmpValidateFile.getAbsolutePath());
@@ -115,7 +119,8 @@ public class LearnerController {
                     tmpTestFile,
                     ReaderUtil.parse(learnerRequestForm.getTestFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
                     ReaderUtil.parse(learnerRequestForm.getTestToDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    granularity, instrument, strategyType, indicatorTypes, false);
+                    granularity, instrument, strategyType, indicatorTypes, watchInstruments,
+                    learnerRequestForm.getPastValuesNumber(), false);
             RecordReader rrTest = new CSVRecordReader();
             rrTest.initialize(new FileSplit(new File(tmpTestFile.getAbsolutePath())));
             log.info("saved test temporary file: "+tmpTestFile.getAbsolutePath());
@@ -123,7 +128,7 @@ public class LearnerController {
             int numOutputs = strategyType.getLabelNumber();
             int batchNumber=learnerRequestForm.getBatchNumber();
             int trainBatchSize=trainSize/batchNumber;
-            int numInputs = learnerRequestForm.getIndicators().size();
+            int numInputs = learnerRequestForm.getIndicators().size() * watchInstruments.size() * (1 + learnerRequestForm.getPastValuesNumber());
             log.info("batchNumber: "+ batchNumber);
             log.info("trainBatchSize: "+ trainBatchSize);
             log.info("validationSize: "+ validationSize);
@@ -158,7 +163,7 @@ public class LearnerController {
             StatsStorage statsStorage = new InMemoryStatsStorage();
             uiServer.attach(statsStorage);
             model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(1000),
-                    new TestScoreIterationListener(1000, numOutputs, validateIterator));
+                    new ValidationScoreIterationListener(1000, numOutputs, validateIterator));
 
             StopCondition stopCondition = StopConditionFactory.getStopCondition(
                     StopConditionType.valueOf(learnerRequestForm.getStopCondition()), model,
@@ -166,20 +171,23 @@ public class LearnerController {
             if (stopCondition == null) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-
+            int seed = 1000;
             do {
                 trainIterator.reset();
                 while(trainIterator.hasNext())
                 {
                     DataSet next = trainIterator.next();
-                    next.shuffle();
+                    next.shuffle(seed++);
+                    if (seed == Integer.MAX_VALUE) {
+                        seed = 1000;
+                    }
                     model.fit(next);
                 }
             } while (!stopCondition.isConditionMet());
 
             model = stopCondition.getBestConfiguration();
             log.info("Evaluate train model....");
-            Evaluation eval = evaluateModel(testIterator, model, numOutputs);
+            Evaluation eval = evaluateModel(trainIterator, model, numOutputs);
             log.info(eval.stats());
             log.info("Evaluate validation models...");
             eval = evaluateModel(validateIterator, model, numOutputs);
@@ -255,9 +263,11 @@ public class LearnerController {
     }
 
     private int writeToCsv(File file, Instant fromDate, Instant toDate,
-                         GranularityType granularity, InstrumentValue instrument,
-                             StrategyType strategy, List<IndicatorType> indicators,
-                             boolean doShuffle) throws Exception {
+                           GranularityType granularity, InstrumentValue instrument,
+                           StrategyType strategy, List<IndicatorType> indicators,
+                           List<InstrumentValue> watchInstruments,
+                           Integer pastValuesNumber,
+                           boolean doShuffle) throws Exception {
         FileWriter writer = null;
         PrintWriter printWriter = null;
         int size = 0;
@@ -266,30 +276,111 @@ public class LearnerController {
             printWriter = new PrintWriter(writer);
 
             log.info("saved train temporary file: "+file.getAbsolutePath());
-            List<RawCandlestick> rawCandleSticks = new ArrayList<>();
-            RawCandlestick rawCandlestick = rawCandlestickRepository.findOne(
+            List<FxLearnData> fxLearnDataList = new ArrayList<>();
+            RawCandlestick mainInstrumentRawCandlestick = findRawCandleStick(
                     fromDate,
                     granularity,
                     instrument);
-            do {
-                rawCandleSticks.add(rawCandlestick);
-                if (rawCandlestick.getNextDateTime() != null &&
-                        !rawCandlestick.getNextDateTime().isAfter(toDate)) {
-                    rawCandlestick = rawCandlestickRepository.findOne(
-                            rawCandlestick.getNextDateTime(),
-                            granularity,
-                            instrument);
-                } else {
-                    rawCandlestick = null;
-                }
-            } while (rawCandlestick != null);
 
+            if (mainInstrumentRawCandlestick == null) {
+                throw new Exception(
+                        "Could not find candlestick for date " + fromDate +
+                                ", instrument: " + instrument +
+                                ", granularity: " + granularity);
+            }
+
+            Map<InstrumentValue, RawCandlestick> watchRawCandlesticks = new LinkedHashMap<>();
+            // We should always watch the instrument we are going to perform action on
+            watchRawCandlesticks.put(instrument, mainInstrumentRawCandlestick);
+
+            // Add other instruments we might want to watch when taking a decision
+            if (watchInstruments != null && watchInstruments.size() > 0) {
+                for (InstrumentValue watchInstrument : watchInstruments) {
+                    if (watchInstrument != instrument) {
+                        RawCandlestick watchRawCandlestick = findRawCandleStick(
+                                fromDate,
+                                granularity,
+                                watchInstrument);
+                        if (watchRawCandlestick == null) {
+                            throw new Exception(
+                                    "Could not find candlestick for date " + fromDate +
+                                    ", instrument: " + watchInstrument +
+                                    ", granularity: " + granularity);
+                        }
+                        watchRawCandlesticks.put(watchInstrument, watchRawCandlestick);
+                    }
+                }
+            }
+
+            // We might also want some historical data to be added to all the instruments we are watching
+            Map<InstrumentValue, LinkedList<RawCandlestick>> watchPreviousCandleSticks = new LinkedHashMap<>();
+            for (InstrumentValue watchedInstrument : watchRawCandlesticks.keySet()) {
+                watchPreviousCandleSticks.put(
+                        watchedInstrument,
+                        getPreviousCandleSticks(
+                        watchRawCandlesticks.get(watchedInstrument),
+                        granularity,
+                        watchedInstrument,
+                        pastValuesNumber));
+            }
+
+            // Combine all the data (all the watched instruments + historical data of each of them)
+            List<RawCandlestick> allDataToWatch = new ArrayList<>();
+            for (LinkedList<RawCandlestick> watchPreviousCandleStick : watchPreviousCandleSticks.values()) {
+                allDataToWatch.addAll(watchPreviousCandleStick);
+            }
+
+            // This is all the data we need to learn how to make a decision in a single instant
+            FxLearnData fxLearnData = new FxLearnData(mainInstrumentRawCandlestick, allDataToWatch, strategy, indicators);
+
+            fxLearnDataList.add(fxLearnData);
+
+            do {
+                // Move forward to next instant, but exit if no next or is after the end date
+                Instant nextDateTime = mainInstrumentRawCandlestick.getNextDateTime();
+                if (nextDateTime != null &&
+                        !nextDateTime.isAfter(toDate)) {
+                    allDataToWatch = new ArrayList<>();
+
+                    // Update the historical data list
+                    for (InstrumentValue watchedInstrument : watchPreviousCandleSticks.keySet()) {
+                        LinkedList<RawCandlestick> watchPreviousCandleStick = watchPreviousCandleSticks.get(watchedInstrument);
+                        // Add new data in front if available, otherwise use previous date data
+                        try {
+                            RawCandlestick nextWatchRawCandlestick = findRawCandleStick(
+                                    nextDateTime,
+                                    granularity,
+                                    watchedInstrument);
+                            watchPreviousCandleStick.addFirst(nextWatchRawCandlestick);
+                            // Drop oldest historical data
+                            watchPreviousCandleStick.removeLast();
+                        } catch (Exception e) {
+                            log.info("Using previous date values for date " + nextDateTime +
+                                    ", instrument: " + instrument +
+                                    ", granularity: " + granularity);
+                        }
+
+                        // Combine all the data (all the watched instruments + historical data of each of them)
+                        allDataToWatch.addAll(watchPreviousCandleStick);
+                    }
+
+                    // Update also the main instrument that is used for the strategy
+                    mainInstrumentRawCandlestick = watchPreviousCandleSticks.get(instrument).getFirst();
+
+                    // This is all the data we need to learn how to make a decision in the next single instant
+                    fxLearnData = new FxLearnData(mainInstrumentRawCandlestick, allDataToWatch, strategy, indicators);
+
+                    fxLearnDataList.add(fxLearnData);
+                } else {
+                    mainInstrumentRawCandlestick = null;
+                }
+            } while (mainInstrumentRawCandlestick != null);
 
             if (doShuffle) {
-                Collections.shuffle(rawCandleSticks);
+                Collections.shuffle(fxLearnDataList);
             }
-            for (RawCandlestick shuffledCandlestick : rawCandleSticks) {
-                printWriter.println(shuffledCandlestick.toCsvLine(strategy, indicators));
+            for (FxLearnData fxLearnDataRecord : fxLearnDataList) {
+                printWriter.println(fxLearnDataRecord.toCsvLine());
                 printWriter.flush();
                 size++;
             }
@@ -309,6 +400,43 @@ public class LearnerController {
             }
         }
         return size;
+    }
+
+    private LinkedList<RawCandlestick> getPreviousCandleSticks(
+            RawCandlestick startCandlestick,
+            GranularityType granularity,
+            InstrumentValue instrument, int pastValuesNumber) throws Exception {
+        LinkedList<RawCandlestick> prevRawCandlesticks = new LinkedList<>();
+        prevRawCandlesticks.addFirst(startCandlestick);
+        while (pastValuesNumber > 0) {
+            if (startCandlestick.getPrevDateTime() == null) {
+                throw new Exception("This candle has missing previous: "
+                        + startCandlestick.getRawCandlestickKey().getDateTime().toString());
+            }
+            startCandlestick = rawCandlestickRepository.findOne(
+                    startCandlestick.getPrevDateTime(),
+                    granularity,
+                    instrument);
+            prevRawCandlesticks.addLast(startCandlestick);
+            pastValuesNumber --;
+
+        }
+        return prevRawCandlesticks;
+    }
+
+    public RawCandlestick findRawCandleStick(Instant date, GranularityType granularity, InstrumentValue instrument)
+        throws Exception{
+        RawCandlestick rawCandlestick = rawCandlestickRepository.findOne(
+                date,
+                granularity,
+                instrument);
+        if (rawCandlestick == null) {
+            throw new Exception(
+                    "Could not find candlestick for date " + date +
+                            ", instrument: " + instrument +
+                            ", granularity: " + granularity);
+        }
+        return rawCandlestick;
     }
 
     public static Evaluation evaluateModel(DataSetIterator dataSetIterator, MultiLayerNetwork model, int numOutputs) {

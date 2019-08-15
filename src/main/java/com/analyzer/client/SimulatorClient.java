@@ -9,7 +9,6 @@ public class SimulatorClient implements TradingClient {
 
     private static final Logger log = LoggerFactory.getLogger(OandaTradingClient.class);
 
-
     private final RawCandlestickRepository rawCandlestickRepository;
 
     public SimulatorClient(RawCandlestickRepository rawCandlestickRepository) {

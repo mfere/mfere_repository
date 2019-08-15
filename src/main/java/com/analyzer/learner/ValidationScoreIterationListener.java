@@ -10,8 +10,8 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestScoreIterationListener implements IterationListener {
-    private int printIterations = 10;
+public class ValidationScoreIterationListener implements IterationListener {
+    private int printIterations;
     private static final Logger log = LoggerFactory.getLogger(org.deeplearning4j.optimize.listeners.ScoreIterationListener.class);
     private boolean invoked = false;
     private long iterCount = 0;
@@ -21,18 +21,10 @@ public class TestScoreIterationListener implements IterationListener {
     /**
      * @param printIterations frequency with which to print scores (i.e., every printIterations parameter updates)
      */
-    public TestScoreIterationListener(int printIterations, int numOutputs, DataSetIterator testScoreIterator) {
+    public ValidationScoreIterationListener(int printIterations, int numOutputs, DataSetIterator validationScoreIterator) {
         this.printIterations = printIterations;
         this.numOutputs = numOutputs;
-        this.iterator = testScoreIterator;
-    }
-
-    /**
-     * Default constructor printing every 10 iterations
-     */
-    public TestScoreIterationListener(int numOutputs, DataSetIterator testScoreIterator) {
-        this.numOutputs = numOutputs;
-        this.iterator = testScoreIterator;
+        this.iterator = validationScoreIterator;
     }
 
     @Override
@@ -63,8 +55,8 @@ public class TestScoreIterationListener implements IterationListener {
                 INDArray predicted = ((MultiLayerNetwork)model).output(features,false);
                 eval.eval(labels, predicted);
             }
-            double result = eval.precision();
-            log.info("Precision on test at " + iterCount + " is " + result);
+            double result = eval.f1();
+            log.info("Score on validation at " + iterCount + " is " + result);
         }
         iterCount++;
     }

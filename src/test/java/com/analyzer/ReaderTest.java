@@ -25,24 +25,16 @@ public class ReaderTest extends ApplicationTest {
     @Test
     public void testReadAll() {
         ReadRequestForm form = new ReadRequestForm();
-        form.setFromDate("2018-01-20 00:00:00");
+        form.setFromDate("2010-01-01 00:00:00");
         List<String> granularity = new ArrayList<>();
         granularity.add(GranularityType.D.name());
-        granularity.add(GranularityType.H4.name());
-        granularity.add(GranularityType.H1.name());
+        //granularity.add(GranularityType.H4.name());
+        //granularity.add(GranularityType.H1.name());
         form.setGranularity(granularity);
 
-        form.setInstrument(InstrumentValue.USD_JPY.name());
-        checkReadResponse(form);
-
-        form.setInstrument(InstrumentValue.USD_CHF.name());
-        checkReadResponse(form);
-
-        form.setInstrument(InstrumentValue.EUR_USD.name());
-        checkReadResponse(form);
-
-        form.setInstrument(InstrumentValue.GBP_USD.name());
-        checkReadResponse(form);
-
+        for (InstrumentValue instrumentValue : InstrumentValue.values()) {
+            form.setInstrument(instrumentValue.name());
+            checkReadResponse(form);
+        }
     }
 }

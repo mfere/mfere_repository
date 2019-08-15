@@ -30,6 +30,8 @@ public class LearnerRequestForm {
     private String testToDate;// = "2016-02-01 00:00:00";
     private String granularity;// = GranularityType.D.getName();
     private List<String> indicators;
+    private List<String> watchInstruments;
+    private Integer pastValuesNumber = 0;
     private String strategy;
     private String networkConfiguration;
     private Double learningRate;

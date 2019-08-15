@@ -90,6 +90,9 @@ public class IndicatorFactory {
     public Double getIndicatorValue(IndicatorType indicatorType, int candleId) {
 
         switch (indicatorType) {
+
+            case CLOSE_PRICE_RAW:
+                return indicators.get(IndicatorType.CLOSE_PRICE_RAW).getValue(candleId).toDouble();
             case BULLISH_ENGULFING_CANDLE:
                 return candlesIndicator.get(IndicatorType.BULLISH_ENGULFING_CANDLE).getValue(candleId) ?
                         TrainingValue.INDICATOR_EXIST.getValue() : TrainingValue.INDICATOR_NOT_EXIST.getValue();
@@ -260,6 +263,12 @@ public class IndicatorFactory {
 
 
             // BOLLING BAND
+            case BOLLINGER_BAND_UPPER_RAW:
+                return indicators.get(IndicatorType.BOLLINGER_BAND_UPPER_RAW).getValue(candleId).toDouble();
+            case BOLLINGER_BAND_LOWER_RAW:
+                return indicators.get(IndicatorType.BOLLINGER_BAND_LOWER_RAW).getValue(candleId).toDouble();
+            case BOLLINGER_BAND_MIDDLE_RAW:
+                return indicators.get(IndicatorType.BOLLINGER_BAND_MIDDLE_RAW).getValue(candleId).toDouble();
             case BOLLINGER_BAND_EXPANDING_OR_CONTRACTING:
                 boolean upperUpwardMoving = upwardOrDownwardSloping(indicators.get(IndicatorType.BOLLINGER_BAND_UPPER_RAW),
                         candleId, 5) == TrainingValue.UPWARD.getValue();

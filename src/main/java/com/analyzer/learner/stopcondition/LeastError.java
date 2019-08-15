@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 public class LeastError implements StopCondition {
 
-    private static final Logger log = LoggerFactory.getLogger(BestPrecisionScore.class);
+    private static final Logger log = LoggerFactory.getLogger(BestScore.class);
 
     private int maxNoChangeIteration;
     private int iterationNumber;

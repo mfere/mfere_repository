@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.analyzer.TestConstants.NETWORK_PATH;
 import static org.junit.Assert.assertEquals;
@@ -61,12 +63,13 @@ public class LearnTest extends ApplicationTest {
     @Test
     public void testLearnRelative() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setStopCondition(StopConditionType.BEST_VALIDATION_SCORE_LAST_10000.name());
+        form.setStopCondition(StopConditionType.BEST_VALIDATION_SCORE_LAST_50000.name());
         form.setNormalizer(NormalizerType.MIN_MAX.name());
-        form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
+        form.setStrategy(StrategyType.B_TAKE_PROFIT_001_24.name());
+        form.setGranularity(GranularityType.D.name());
         form.setBatchNumber(1);
         form.setLearningRate(0.1);
-        form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
+        form.setNetworkConfiguration(readNetworkConfiguration(NETWORK_NAME));
         form.setIndicators(getRelativeIndicators());
 
         ResponseEntity<String> response = template.postForEntity(
@@ -76,14 +79,20 @@ public class LearnTest extends ApplicationTest {
     }
 
     @Test
-    public void testConvergance() throws Exception {
+    public void testConvergence() throws Exception {
         LearnerRequestForm form = createBaseLearnerRequestForm();
-        form.setStrategy(StrategyType.BS_TAKE_PROFIT_005_24.name());
+        form.setStrategy(StrategyType.B_TAKE_PROFIT_005_24.name());
         form.setIndicators(getRelativeIndicators());
         form.setTrainFromDate("2011-01-04 00:00:00");
         form.setTrainToDate("2011-06-31 00:00:00");
         form.setName("D_EUR_USD");
-        form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
+        List<String> watchInstruments = new ArrayList<>();
+        for (InstrumentValue instrumentValue : InstrumentValue.values()) {
+            watchInstruments.add(instrumentValue.name());
+        }
+        form.setWatchInstruments(watchInstruments);
+        form.setPastValuesNumber(1);
+        form.setNetworkConfiguration(readNetworkConfiguration(NETWORK_NAME));
         form.setBatchNumber(1);
         form.setLearningRate(0.1);
         form.setNormalizer(NormalizerType.MIN_MAX.name());
@@ -122,7 +131,7 @@ public class LearnTest extends ApplicationTest {
         form.setBatchNumber(50);
         form.setLearningRate(0.001);
         form.setNormalizer(NormalizerType.MIN_MAX.name());
-        form.setNetworkConfiguration(readNetworkConfiguration("3layerNetwork"));
+        form.setNetworkConfiguration(readNetworkConfiguration(NETWORK_NAME));
         return form;
     }
 

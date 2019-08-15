@@ -105,59 +105,6 @@ public class RawCandlestick implements Persistable {
         }
     }
 
-    // First column is always reward function
-    public String toCsvLine(StrategyType strategyType,
-                            List<IndicatorType> indicatorTypes) throws Exception {
-        StringBuilder stringBuilder = new StringBuilder();
-        boolean found = false;
-
-        if (actionStrategies != null) {
-            for (ActionStrategy actionStrategy : actionStrategies) {
-                if (actionStrategy.getStrategyTypeValue().equals(strategyType.name())) {
-                    if (strategyType.getLabelNumber() > 2) {
-                        stringBuilder.append(actionStrategy.getActionTypeValue());
-                    } else {
-                        stringBuilder.append(actionStrategy.getActionTypeValue() > 0 ? 1 : 0);
-                    }
-                    found = true;
-                    break;
-                }
-
-            }
-            if (!found) {
-                throw new Exception("Reward function ("+ strategyType.name()+") " +
-                        "value not found for instant " + getRawCandlestickKey().getDateTime().toString());
-            }
-        } else {
-            throw new Exception("This candle has no reward functions: "
-                    + getRawCandlestickKey().getDateTime().toString());
-
-        }
-        if (fxIndicators != null) {
-            for (IndicatorType indicatorType : indicatorTypes) {
-                found = false;
-                for (FxIndicator indicator : fxIndicators) {
-                    if (indicator.getName().equalsIgnoreCase(indicatorType.name())) {
-                        stringBuilder.append(",");
-                        stringBuilder.append(indicator.getValue());
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    throw new Exception("Indicator ("+ indicatorType.name()+") "
-                            + "value not found for instant " + getRawCandlestickKey().getDateTime().toString());
-                }
-            }
-        } else {
-            throw new Exception("This candle has no indicators: "
-                    + getRawCandlestickKey().getDateTime().toString());
-
-        }
-
-        return stringBuilder.toString();
-    }
-
     public ActionStrategy getActionStrategy (String name) {
         for (ActionStrategy actionStrategy : actionStrategies) {
             if (actionStrategy.getStrategyTypeValue().equals(name)) {

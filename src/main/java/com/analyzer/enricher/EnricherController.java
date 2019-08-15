@@ -69,9 +69,11 @@ public class EnricherController {
                 rawCandlestick = rawCandlestickList.get(i);
                 for (IndicatorType indicatorName : indicatorList) {
                     if (indicatorFactory.getIndicatorValue(indicatorName, i) != null) {
-                        rawCandlestick.addIndicator(
-                                new FxIndicator(indicatorName.name(), indicatorFactory.getIndicatorValue(indicatorName, i))
-                        );
+                        FxIndicator indicator = new FxIndicator(indicatorName.name(), indicatorFactory.getIndicatorValue(indicatorName, i));
+                        if (Math.random() >= 0.99) {
+                            log.info("Writing indicator "+indicator.getName()+" : "+indicator.getValue());
+                        }
+                        rawCandlestick.addIndicator(indicator);
                     }
                 }
             }

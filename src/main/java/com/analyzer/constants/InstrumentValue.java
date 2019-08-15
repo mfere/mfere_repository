@@ -11,7 +11,9 @@ public enum InstrumentValue {
     EUR_USD(new InstrumentName("EUR/USD"), 0.0001),
     GBP_USD(new InstrumentName("GBP/USD"), 0.0001),
     USD_CHF(new InstrumentName("USD/CHF"), 0.0001),
-    USD_JPY(new InstrumentName("USD/JPY"), 0.01);
+    USD_JPY(new InstrumentName("USD/JPY"), 0.01),
+    XAU_USD(new InstrumentName("XAU/USD"), 0.01),
+    BCO_USD(new InstrumentName("BCO/USD"), 0.01);
 
     public InstrumentName instrumentName;
     public double pipValue;

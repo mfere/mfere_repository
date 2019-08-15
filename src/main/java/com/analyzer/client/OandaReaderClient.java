@@ -49,9 +49,8 @@ public class OandaReaderClient {
         boolean keepRead = true;
         Instant lastDate = null;
 
-
-                InstrumentCandlesRequest request = new InstrumentCandlesRequest(
-                new InstrumentName(instrument.name()));
+        InstrumentCandlesRequest request = new InstrumentCandlesRequest(
+        new InstrumentName(instrument.name()));
 
         while (keepRead) {
             if (fromDate != null) {
