@@ -25,11 +25,11 @@ public class ReaderTest extends ApplicationTest {
     @Test
     public void testReadAll() {
         ReadRequestForm form = new ReadRequestForm();
-        form.setFromDate("2010-01-01 00:00:00");
+        form.setFromDate("2019-08-01 00:00:00");
         List<String> granularity = new ArrayList<>();
-        granularity.add(GranularityType.D.name());
+        //granularity.add(GranularityType.D.name());
         //granularity.add(GranularityType.H4.name());
-        //granularity.add(GranularityType.H1.name());
+        granularity.add(GranularityType.H1.name());
         form.setGranularity(granularity);
 
         for (InstrumentValue instrumentValue : InstrumentValue.values()) {

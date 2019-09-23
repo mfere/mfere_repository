@@ -1,7 +1,7 @@
 package com.analyzer.constants;
 
 public enum NormalizerType {
-    STANDARD,
+    STANDARDIZE,
     MIN_MAX,
     NONE;
 }

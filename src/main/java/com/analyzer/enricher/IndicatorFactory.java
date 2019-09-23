@@ -18,6 +18,7 @@ import org.ta4j.core.indicators.candles.BearishHaramiIndicator;
 import org.ta4j.core.indicators.candles.BullishEngulfingIndicator;
 import org.ta4j.core.indicators.candles.BullishHaramiIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 import org.ta4j.core.indicators.helpers.VolumeIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 
@@ -93,6 +94,8 @@ public class IndicatorFactory {
 
             case CLOSE_PRICE_RAW:
                 return indicators.get(IndicatorType.CLOSE_PRICE_RAW).getValue(candleId).toDouble();
+            case OPEN_PRICE_RAW:
+                return indicators.get(IndicatorType.OPEN_PRICE_RAW).getValue(candleId).toDouble();
             case BULLISH_ENGULFING_CANDLE:
                 return candlesIndicator.get(IndicatorType.BULLISH_ENGULFING_CANDLE).getValue(candleId) ?
                         TrainingValue.INDICATOR_EXIST.getValue() : TrainingValue.INDICATOR_NOT_EXIST.getValue();
@@ -126,9 +129,8 @@ public class IndicatorFactory {
                 return isDownwardSloping(indicators.get(IndicatorType.SMA_5_RAW), candleId, 5);
             case SMA_5_CLOSE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.SMA_5_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
-            case SMA_5_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.SMA_5_RAW), candleId);
-
+            case SMA_5_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.SMA_5_RAW), candleId);
 
             // SMA 10
             case SMA_10_RAW:
@@ -150,9 +152,8 @@ public class IndicatorFactory {
                 return isDownwardSloping(indicators.get(IndicatorType.SMA_10_RAW), candleId, 10);
             case SMA_10_CLOSE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.SMA_10_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
-            case SMA_10_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.SMA_10_RAW), candleId);
-
+            case SMA_10_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.SMA_10_RAW), candleId);
 
             // SMA 50
             case SMA_50_RAW:
@@ -174,9 +175,8 @@ public class IndicatorFactory {
                 return isDownwardSloping(indicators.get(IndicatorType.SMA_50_RAW), candleId, 50);
             case SMA_50_CLOSE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.SMA_50_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
-            case SMA_50_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.SMA_50_RAW), candleId);
-
+            case SMA_50_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.SMA_50_RAW), candleId);
 
             // SMA 100
             case SMA_100_RAW:
@@ -198,9 +198,8 @@ public class IndicatorFactory {
                 return isDownwardSloping(indicators.get(IndicatorType.SMA_100_RAW), candleId, 100);
             case SMA_100_CLOSE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.SMA_100_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
-            case SMA_100_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.SMA_100_RAW), candleId);
-
+            case SMA_100_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.SMA_100_RAW), candleId);
 
             // SMA 200
             case SMA_200_RAW:
@@ -222,9 +221,8 @@ public class IndicatorFactory {
                 return isDownwardSloping(indicators.get(IndicatorType.SMA_200_RAW), candleId, 200);
             case SMA_200_CLOSE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.SMA_200_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
-            case SMA_200_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.SMA_200_RAW), candleId);
-
+            case SMA_200_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.SMA_200_RAW), candleId);
 
             // MACD
             case MACD_RAW:
@@ -238,10 +236,8 @@ public class IndicatorFactory {
             case MACD_IS_DIV_NEGATIVE:
                 return indicators.get(IndicatorType.MACD_RAW).getValue(candleId).isLessThan(Decimal.ZERO) ?
                         TrainingValue.INDICATOR_EXIST.getValue() : TrainingValue.INDICATOR_NOT_EXIST.getValue();
-            case MACD_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.MACD_RAW), candleId);
-
-
+            case MACD_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.MACD_RAW), candleId);
 
             //RSI
             case RSI_RAW:
@@ -258,9 +254,8 @@ public class IndicatorFactory {
                 return isUpwardSloping(indicators.get(IndicatorType.RSI_RAW), candleId, 5);
             case RSI_IS_DOWNWARD_SLOPING:
                 return isDownwardSloping(indicators.get(IndicatorType.RSI_RAW), candleId, 5);
-            case RSI_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.RSI_RAW), candleId);
-
+            case RSI_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.RSI_RAW), candleId);
 
             // BOLLING BAND
             case BOLLINGER_BAND_UPPER_RAW:
@@ -309,15 +304,14 @@ public class IndicatorFactory {
                 return differenceBetweenIndictors(indicators.get(IndicatorType.BOLLINGER_BAND_UPPER_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
             case BOLLINGER_BAND_MIDDLE_DIFF:
                 return differenceBetweenIndictors(indicators.get(IndicatorType.BOLLINGER_BAND_MIDDLE_RAW), indicators.get(IndicatorType.CLOSE_PRICE_RAW), candleId);
-            case BOLLINGER_BAND_UPPER_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.BOLLINGER_BAND_UPPER_RAW), candleId);
-            case BOLLINGER_BAND_MIDDLE_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.BOLLINGER_BAND_MIDDLE_RAW), candleId);
-            case BOLLINGER_BAND_LOWER_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.BOLLINGER_BAND_LOWER_RAW), candleId);
-            case BOLLINGER_BAND_WIDTH_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.BOLLINGER_BAND_WIDTH_RAW), candleId);
-
+            case BOLLINGER_BAND_UPPER_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.BOLLINGER_BAND_UPPER_RAW), candleId);
+            case BOLLINGER_BAND_MIDDLE_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.BOLLINGER_BAND_MIDDLE_RAW), candleId);
+            case BOLLINGER_BAND_LOWER_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.BOLLINGER_BAND_LOWER_RAW), candleId);
+            case BOLLINGER_BAND_WIDTH_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.BOLLINGER_BAND_WIDTH_RAW), candleId);
 
             // stochastic oscillator
             case STOCHASTIC_OSCILLATOR_D_RAW:
@@ -365,11 +359,10 @@ public class IndicatorFactory {
                 return isUpwardSloping(indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_D_RAW), candleId, 3);
             case STOCHASTIC_OSCILLATOR_IS_D_DOWNWARD_SLOPING:
                 return isDownwardSloping(indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_D_RAW), candleId, 3);
-            case STOCHASTIC_OSCILLATOR_K_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_K_RAW), candleId);
-            case STOCHASTIC_OSCILLATOR_D_DIFF_WITH_YESTERDAY:
-                return differenceWithYesterday(indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_D_RAW), candleId);
-
+            case STOCHASTIC_OSCILLATOR_K_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_K_RAW), candleId);
+            case STOCHASTIC_OSCILLATOR_D_DIFF_WITH_PREVIOUS:
+                return differenceWithPrevious(indicators.get(IndicatorType.STOCHASTIC_OSCILLATOR_D_RAW), candleId);
 
             // others
             case VOLUME_RAW:
@@ -500,13 +493,13 @@ public class IndicatorFactory {
     }
 
     /**
-     * return value change of the indictor compareed with yesterday
+     * return value change of the indicator compared with previous
      *
      * @param firstIndicator
      * @param candleId
      * @return
      */
-    private Double differenceWithYesterday(Indicator<Decimal> firstIndicator, int candleId) {
+    private Double differenceWithPrevious(Indicator<Decimal> firstIndicator, int candleId) {
         // if this is the first candle
         if (candleId == 0) {
             return 0d;
@@ -662,7 +655,7 @@ public class IndicatorFactory {
         LocalDate today = currentCandle.getRawCandlestickKey().getDateTime().atOffset(ZoneOffset.UTC).toLocalDate();
         LocalDate nextDateCandle = today;
         // get the next date time
-        for (int i = candleId ;i <= rawCandlestickList.size() ; i++) {
+        for (int i = candleId ;i < rawCandlestickList.size() ; i++) {
             if (rawCandlestickList.get(i).getNextDateTime() == null) {
                 return TrainingValue.INDICATOR_NOT_EXIST.getValue();
             }

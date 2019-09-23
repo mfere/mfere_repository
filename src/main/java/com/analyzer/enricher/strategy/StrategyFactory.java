@@ -11,6 +11,8 @@ public class StrategyFactory {
         switch (strategy) {
             case BS_TAKE_PROFIT_001_24: return new FixedBuySellTakeProfit(BS_TAKE_PROFIT_001_24.name(),
                     24,10);
+            case BS_TAKE_PROFIT_001_120: return new FixedBuySellTakeProfit(BS_TAKE_PROFIT_001_120.name(),
+                    120,10);
             case BS_TAKE_PROFIT_004_24: return new FixedBuySellTakeProfit(BS_TAKE_PROFIT_004_24.name(),
                     24,40);
             case BS_TAKE_PROFIT_005_24: return new FixedBuySellTakeProfit(BS_TAKE_PROFIT_005_24.name(),

@@ -24,6 +24,7 @@ public abstract class Strategy implements Serializable {
 
     public abstract ActionStrategy getCorrectActionStrategy(
             RawCandlestickRepository rawCandlestickRepository, RawCandlestick rawCandlestick);
+
     public Action getPredictedAction(
             InstrumentValue instrument,
             INDArray prediction,

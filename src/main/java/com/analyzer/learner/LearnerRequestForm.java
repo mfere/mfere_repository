@@ -16,6 +16,7 @@ public class LearnerRequestForm {
 
     private String name;
     private String instrument;// = InstrumentValue.EUR_USD.name();
+    private String trainDataName = null; // To avoid re-create a file
     @DateTimeFormat(pattern = DATE_TIME_PATTERN)
     private String trainFromDate;// = "2016-06-01 00:00:00";
     @DateTimeFormat(pattern = DATE_TIME_PATTERN)

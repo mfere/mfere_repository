@@ -52,13 +52,16 @@ public class LearnerController {
     private final RawCandlestickRepository rawCandlestickRepository;
     private final UIServer uiServer;
     private String trainedNetworksPath;
+    private String inputDataPath;
 
     LearnerController(RawCandlestickRepository rawCandlestickRepository,
                       UIServer uiServer,
-                      @Value("${trained.network.path}") String trainedNetworksPath) {
+                      @Value("${trained.network.path}") String trainedNetworksPath,
+                      @Value("${input.data.path}") String inputDataPath) {
         this.rawCandlestickRepository = rawCandlestickRepository;
         this.uiServer = uiServer;
         this.trainedNetworksPath = trainedNetworksPath;
+        this.inputDataPath = inputDataPath;
     }
 
     @RequestMapping(value = "/learn", method = RequestMethod.POST)
@@ -69,10 +72,18 @@ public class LearnerController {
         if (bindingResult.hasErrors()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
-        File tmpTrainFile;
-        File tmpValidateFile;
-        File tmpTestFile;
+        File tmpTrainFile = new File(inputDataPath + "train.csv");
+        File tmpValidateFile = new File(inputDataPath + "validate.csv");
+        File tmpTestFile = new File(inputDataPath + "test.csv");
+        if (learnerRequestForm.getTrainDataName() == null) {
+            tmpTrainFile = new File(inputDataPath + "train_"+new Date().getTime()+".csv");
+            tmpValidateFile = new File(inputDataPath + "validate_"+new Date().getTime()+".csv");
+            tmpTestFile = new File(inputDataPath + "test_"+new Date().getTime()+".csv");
+        } else {
+            tmpTrainFile = new File(inputDataPath + "train_"+learnerRequestForm.getTrainDataName()+".csv");
+            tmpValidateFile = new File(inputDataPath + "validate_"+learnerRequestForm.getTrainDataName()+".csv");
+            tmpTestFile = new File(inputDataPath + "test_"+learnerRequestForm.getTrainDataName()+".csv");
+        }
         try {
             GranularityType granularity = GranularityType.valueOf(
                     learnerRequestForm.getGranularity());
@@ -90,44 +101,66 @@ public class LearnerController {
             }
 
             // TRAIN DATA CREATION
-            tmpTrainFile = File.createTempFile("train_"+new Date().getTime(), ".csv");
-            int trainSize = writeToCsv(
-                    tmpTrainFile,
-                    ReaderUtil.parse(learnerRequestForm.getTrainFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    ReaderUtil.parse(learnerRequestForm.getTrainToDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    granularity, instrument, strategyType, indicatorTypes, watchInstruments,
-                    learnerRequestForm.getPastValuesNumber(), learnerRequestForm.isShuffleData());
+            //tmpTrainFile = File.createTempFile("train_"+new Date().getTime(), ".csv");
+            int trainSize = 0;
+            if (!tmpTrainFile.exists()) {
+                trainSize = writeToCsv(
+                        tmpTrainFile,
+                        ReaderUtil.parse(learnerRequestForm.getTrainFromDate(), ReadRequestForm.DATE_TIME_PATTERN),
+                        ReaderUtil.parse(learnerRequestForm.getTrainToDate(), ReadRequestForm.DATE_TIME_PATTERN),
+                        granularity, instrument, strategyType, indicatorTypes, watchInstruments,
+                        learnerRequestForm.getPastValuesNumber(), learnerRequestForm.isShuffleData());
+            } else {
+                BufferedReader reader = new BufferedReader(new FileReader(tmpTrainFile));
+                while (reader.readLine() != null) trainSize++;
+                reader.close();
+            }
             RecordReader rrTrain = new CSVRecordReader();
             rrTrain.initialize(new FileSplit(new File(tmpTrainFile.getAbsolutePath())));
             log.info("saved train temporary file: "+tmpTrainFile.getAbsolutePath());
 
             // VALIDATION DATA CREATION
-            tmpValidateFile = File.createTempFile("valid_"+new Date().getTime(), ".csv");
-            int validationSize = writeToCsv(
-                    tmpValidateFile,
-                    ReaderUtil.parse(learnerRequestForm.getValidateFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    ReaderUtil.parse(learnerRequestForm.getValidateToDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    granularity, instrument, strategyType, indicatorTypes, watchInstruments,
-                    learnerRequestForm.getPastValuesNumber(), false);
+            //tmpValidateFile = File.createTempFile("valid_"+new Date().getTime(), ".csv");
+            int validationSize = 0;
+            if (!tmpValidateFile.exists()) {
+                validationSize = writeToCsv(
+                        tmpValidateFile,
+                        ReaderUtil.parse(learnerRequestForm.getValidateFromDate(), ReadRequestForm.DATE_TIME_PATTERN),
+                        ReaderUtil.parse(learnerRequestForm.getValidateToDate(), ReadRequestForm.DATE_TIME_PATTERN),
+                        granularity, instrument, strategyType, indicatorTypes, watchInstruments,
+                        learnerRequestForm.getPastValuesNumber(), false);
+            } else {
+                BufferedReader reader = new BufferedReader(new FileReader(tmpValidateFile));
+                while (reader.readLine() != null) validationSize++;
+                reader.close();
+            }
             RecordReader rrValidate = new CSVRecordReader();
             rrValidate.initialize(new FileSplit(new File(tmpValidateFile.getAbsolutePath())));
-            log.info("saved validation temporary file: "+tmpValidateFile.getAbsolutePath());
+            log.info("saved validation temporary file: " + tmpValidateFile.getAbsolutePath());
 
             // TEST DATA CREATION
-            tmpTestFile = File.createTempFile("test_"+new Date().getTime(), ".csv");
-            int testSize = writeToCsv(
-                    tmpTestFile,
-                    ReaderUtil.parse(learnerRequestForm.getTestFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    ReaderUtil.parse(learnerRequestForm.getTestToDate(),ReadRequestForm.DATE_TIME_PATTERN),
-                    granularity, instrument, strategyType, indicatorTypes, watchInstruments,
-                    learnerRequestForm.getPastValuesNumber(), false);
+            //tmpTestFile = File.createTempFile("test_"+new Date().getTime(), ".csv");
+            int testSize = 0;
+            if (!tmpTestFile.exists()) {
+                testSize = writeToCsv(
+                        tmpTestFile,
+                        ReaderUtil.parse(learnerRequestForm.getTestFromDate(),ReadRequestForm.DATE_TIME_PATTERN),
+                        ReaderUtil.parse(learnerRequestForm.getTestToDate(),ReadRequestForm.DATE_TIME_PATTERN),
+                        granularity, instrument, strategyType, indicatorTypes, watchInstruments,
+                        learnerRequestForm.getPastValuesNumber(), false);
+            } else {
+                BufferedReader reader = new BufferedReader(new FileReader(tmpTestFile));
+                while (reader.readLine() != null) testSize++;
+                reader.close();
+            }
             RecordReader rrTest = new CSVRecordReader();
             rrTest.initialize(new FileSplit(new File(tmpTestFile.getAbsolutePath())));
             log.info("saved test temporary file: "+tmpTestFile.getAbsolutePath());
 
+
             int numOutputs = strategyType.getLabelNumber();
             int batchNumber=learnerRequestForm.getBatchNumber();
-            int trainBatchSize=trainSize/batchNumber;
+            int trainBatchSize=batchNumber > 0 ? batchNumber : trainSize;
             int numInputs = learnerRequestForm.getIndicators().size() * watchInstruments.size() * (1 + learnerRequestForm.getPastValuesNumber());
             log.info("batchNumber: "+ batchNumber);
             log.info("trainBatchSize: "+ trainBatchSize);
@@ -162,9 +195,8 @@ public class LearnerController {
 
             StatsStorage statsStorage = new InMemoryStatsStorage();
             uiServer.attach(statsStorage);
-            model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(1000),
-                    new ValidationScoreIterationListener(1000, numOutputs, validateIterator));
-
+            model.setListeners(new StatsListener(statsStorage), new ScoreIterationListener(100),
+                    new ValidationScoreIterationListener(60, numOutputs, validateIterator));
             StopCondition stopCondition = StopConditionFactory.getStopCondition(
                     StopConditionType.valueOf(learnerRequestForm.getStopCondition()), model,
                     trainIterator, validateIterator, numOutputs);
@@ -300,12 +332,6 @@ public class LearnerController {
                                 fromDate,
                                 granularity,
                                 watchInstrument);
-                        if (watchRawCandlestick == null) {
-                            throw new Exception(
-                                    "Could not find candlestick for date " + fromDate +
-                                    ", instrument: " + watchInstrument +
-                                    ", granularity: " + granularity);
-                        }
                         watchRawCandlesticks.put(watchInstrument, watchRawCandlestick);
                     }
                 }
@@ -317,10 +343,10 @@ public class LearnerController {
                 watchPreviousCandleSticks.put(
                         watchedInstrument,
                         getPreviousCandleSticks(
-                        watchRawCandlesticks.get(watchedInstrument),
-                        granularity,
-                        watchedInstrument,
-                        pastValuesNumber));
+                            watchRawCandlesticks.get(watchedInstrument),
+                            granularity,
+                            watchedInstrument,
+                            pastValuesNumber));
             }
 
             // Combine all the data (all the watched instruments + historical data of each of them)

@@ -55,7 +55,7 @@ public class TradeStrategy {
         this.input = input;
     }
 
-    public void calculateInput(RawCandlestick rawCandlestick) throws Exception{
+    public void calculateInput(RawCandlestick rawCandlestick) {
         input = Nd4j.zeros(predictionIndicators.size());
         FxIndicator[] fxIndicators = rawCandlestick.getFxIndicators();
         int column = 0;

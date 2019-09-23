@@ -2,6 +2,7 @@ package com.analyzer.learner.stopcondition;
 
 import com.analyzer.learner.LearnerController;
 import org.deeplearning4j.eval.Evaluation;
+import org.deeplearning4j.evaluation.EvaluationTools;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.slf4j.Logger;
@@ -59,6 +60,7 @@ public class BestScore implements StopCondition {
                     log.info("Finishing using models with f1 score: " + eval.f1());
                     return true;
                 }
+                log.info("Worse f1 score: " + eval.f1());
             }
         }
         iterationNumber = 0;

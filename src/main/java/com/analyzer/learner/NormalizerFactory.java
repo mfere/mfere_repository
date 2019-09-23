@@ -10,7 +10,7 @@ public class NormalizerFactory {
             NormalizerType value) {
         switch (value) {
             case MIN_MAX: return new NormalizerMinMaxScaler();
-            case STANDARD: return new NormalizerStandardize();
+            case STANDARDIZE: return new NormalizerStandardize();
             default: return null;
         }
     }

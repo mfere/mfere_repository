@@ -59,7 +59,7 @@ public class EnricherTest extends ApplicationTest {
     @Test
     public void testEnrichAll() {
         EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
-        enrichRequestForm.setGranularity(GranularityType.D.name());
+        enrichRequestForm.setGranularity(GranularityType.H1.name());
         for (InstrumentValue instrumentValue : InstrumentValue.values()) {
             enrichRequestForm.setInstrument(instrumentValue.name());
             checkEnrichResponse(enrichRequestForm);
@@ -87,25 +87,18 @@ public class EnricherTest extends ApplicationTest {
     public void testEnrichStrategy() {
         EnrichRequestForm enrichRequestForm = createBaseEnrichForm();
         enrichRequestForm.setIndicators(new ArrayList<>());
+        for (InstrumentValue instrumentValue : InstrumentValue.values()) {
+            enrichRequestForm.setInstrument(instrumentValue.name());
+            checkEnrichResponse(enrichRequestForm);
+        }
 
-        enrichRequestForm.setInstrument(InstrumentValue.USD_CHF.name());
-        checkEnrichResponse(enrichRequestForm);
-
-        enrichRequestForm.setInstrument(InstrumentValue.EUR_USD.name());
-        checkEnrichResponse(enrichRequestForm);
-
-        enrichRequestForm.setInstrument(InstrumentValue.GBP_USD.name());
-        checkEnrichResponse(enrichRequestForm);
-
-        enrichRequestForm.setInstrument(InstrumentValue.USD_JPY.name());
-        checkEnrichResponse(enrichRequestForm);
     }
 
     private EnrichRequestForm createBaseEnrichForm() {
         EnrichRequestForm enrichRequestForm = new EnrichRequestForm();
-        enrichRequestForm.setFromDate("2010-01-02 00:00:00");
-        enrichRequestForm.setToDate("2019-08-14 00:00:00");
-        enrichRequestForm.setGranularity(GranularityType.D.name());
+        enrichRequestForm.setFromDate("2010-01-04 06:00:00");
+        enrichRequestForm.setToDate("2020-09-08 00:00:00");
+        enrichRequestForm.setGranularity(GranularityType.H1.name());
         List<String> indicators = new ArrayList<>();
         List<IndicatorType> indicatorTypeList = new ArrayList<>(Arrays.asList(IndicatorType.values()));
         for (IndicatorType indicatorType : indicatorTypeList) {

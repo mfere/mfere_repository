@@ -10,19 +10,21 @@
     "layer" : {
       "dense" : {
         "activationFn" : {
-          "ReLU" : { }
+          "LReLU" : {
+            "alpha" : 0.01
+          }
         },
-        "adamMeanDecay" : 0.9,
-        "adamVarDecay" : 0.999,
+        "adamMeanDecay" : "NaN",
+        "adamVarDecay" : "NaN",
         "biasInit" : 1.0,
         "biasLearningRate" : 0.01,
         "dist" : null,
         "dropOut" : 0.0,
-        "epsilon" : 1.0E-8,
+        "epsilon" : "NaN",
         "gradientNormalization" : "None",
         "gradientNormalizationThreshold" : 1.0,
         "iupdater" : {
-          "@class" : "org.nd4j.linalg.learning.config.Adam",
+          "@class" : "org.nd4j.linalg.learning.config.Nadam",
           "beta1" : 0.9,
           "beta2" : 0.999,
           "epsilon" : 1.0E-8,
@@ -31,7 +33,7 @@
         "l1" : 0.0,
         "l1Bias" : 0.0,
         "l2" : 1.0E-4,
-        "l2Bias" : 0.0,
+        "l2Bias" : 1.0E-4,
         "layerName" : "layer0",
         "learningRate" : 0.01,
         "learningRateSchedule" : null,
@@ -41,7 +43,7 @@
         "nout" : 500,
         "rho" : "NaN",
         "rmsDecay" : "NaN",
-        "updater" : "ADAM",
+        "updater" : null,
         "weightInit" : "XAVIER"
       }
     },
@@ -70,19 +72,21 @@
     "layer" : {
       "dense" : {
         "activationFn" : {
-          "ReLU" : { }
+          "LReLU" : {
+            "alpha" : 0.01
+          }
         },
-        "adamMeanDecay" : 0.9,
-        "adamVarDecay" : 0.999,
+        "adamMeanDecay" : "NaN",
+        "adamVarDecay" : "NaN",
         "biasInit" : 1.0,
         "biasLearningRate" : 0.01,
         "dist" : null,
         "dropOut" : 0.0,
-        "epsilon" : 1.0E-8,
+        "epsilon" : "NaN",
         "gradientNormalization" : "None",
         "gradientNormalizationThreshold" : 1.0,
         "iupdater" : {
-          "@class" : "org.nd4j.linalg.learning.config.Adam",
+          "@class" : "org.nd4j.linalg.learning.config.Nadam",
           "beta1" : 0.9,
           "beta2" : 0.999,
           "epsilon" : 1.0E-8,
@@ -91,7 +95,7 @@
         "l1" : 0.0,
         "l1Bias" : 0.0,
         "l2" : 1.0E-4,
-        "l2Bias" : 0.0,
+        "l2Bias" : 1.0E-4,
         "layerName" : "layer1",
         "learningRate" : 0.01,
         "learningRateSchedule" : null,
@@ -101,7 +105,7 @@
         "nout" : 250,
         "rho" : "NaN",
         "rmsDecay" : "NaN",
-        "updater" : "ADAM",
+        "updater" : null,
         "weightInit" : "XAVIER"
       }
     },
@@ -130,19 +134,21 @@
     "layer" : {
       "dense" : {
         "activationFn" : {
-          "ReLU" : { }
+          "LReLU" : {
+            "alpha" : 0.01
+          }
         },
-        "adamMeanDecay" : 0.9,
-        "adamVarDecay" : 0.999,
+        "adamMeanDecay" : "NaN",
+        "adamVarDecay" : "NaN",
         "biasInit" : 1.0,
         "biasLearningRate" : 0.01,
         "dist" : null,
         "dropOut" : 0.0,
-        "epsilon" : 1.0E-8,
+        "epsilon" : "NaN",
         "gradientNormalization" : "None",
         "gradientNormalizationThreshold" : 1.0,
         "iupdater" : {
-          "@class" : "org.nd4j.linalg.learning.config.Adam",
+          "@class" : "org.nd4j.linalg.learning.config.Nadam",
           "beta1" : 0.9,
           "beta2" : 0.999,
           "epsilon" : 1.0E-8,
@@ -151,7 +157,7 @@
         "l1" : 0.0,
         "l1Bias" : 0.0,
         "l2" : 1.0E-4,
-        "l2Bias" : 0.0,
+        "l2Bias" : 1.0E-4,
         "layerName" : "layer2",
         "learningRate" : 0.01,
         "learningRateSchedule" : null,
@@ -161,7 +167,7 @@
         "nout" : 100,
         "rho" : "NaN",
         "rmsDecay" : "NaN",
-        "updater" : "ADAM",
+        "updater" : null,
         "weightInit" : "XAVIER"
       }
     },
@@ -190,19 +196,21 @@
     "layer" : {
       "dense" : {
         "activationFn" : {
-          "ReLU" : { }
+          "LReLU" : {
+            "alpha" : 0.01
+          }
         },
-        "adamMeanDecay" : 0.9,
-        "adamVarDecay" : 0.999,
+        "adamMeanDecay" : "NaN",
+        "adamVarDecay" : "NaN",
         "biasInit" : 1.0,
         "biasLearningRate" : 0.01,
         "dist" : null,
         "dropOut" : 0.0,
-        "epsilon" : 1.0E-8,
+        "epsilon" : "NaN",
         "gradientNormalization" : "None",
         "gradientNormalizationThreshold" : 1.0,
         "iupdater" : {
-          "@class" : "org.nd4j.linalg.learning.config.Adam",
+          "@class" : "org.nd4j.linalg.learning.config.Nadam",
           "beta1" : 0.9,
           "beta2" : 0.999,
           "epsilon" : 1.0E-8,
@@ -211,7 +219,7 @@
         "l1" : 0.0,
         "l1Bias" : 0.0,
         "l2" : 1.0E-4,
-        "l2Bias" : 0.0,
+        "l2Bias" : 1.0E-4,
         "layerName" : "layer3",
         "learningRate" : 0.01,
         "learningRateSchedule" : null,
@@ -221,7 +229,7 @@
         "nout" : 50,
         "rho" : "NaN",
         "rmsDecay" : "NaN",
-        "updater" : "ADAM",
+        "updater" : null,
         "weightInit" : "XAVIER"
       }
     },
@@ -252,17 +260,17 @@
         "activationFn" : {
           "Softmax" : { }
         },
-        "adamMeanDecay" : 0.9,
-        "adamVarDecay" : 0.999,
+        "adamMeanDecay" : "NaN",
+        "adamVarDecay" : "NaN",
         "biasInit" : 1.0,
         "biasLearningRate" : 0.01,
         "dist" : null,
         "dropOut" : 0.0,
-        "epsilon" : 1.0E-8,
+        "epsilon" : "NaN",
         "gradientNormalization" : "None",
         "gradientNormalizationThreshold" : 1.0,
         "iupdater" : {
-          "@class" : "org.nd4j.linalg.learning.config.Adam",
+          "@class" : "org.nd4j.linalg.learning.config.Nadam",
           "beta1" : 0.9,
           "beta2" : 0.999,
           "epsilon" : 1.0E-8,
@@ -271,21 +279,23 @@
         "l1" : 0.0,
         "l1Bias" : 0.0,
         "l2" : 1.0E-4,
-        "l2Bias" : 0.0,
+        "l2Bias" : 1.0E-4,
         "layerName" : "layer4",
         "learningRate" : 0.01,
         "learningRateSchedule" : null,
         "lossFn" : {
-          "MSE" : { }
+          "MCXENT" : {
+            "softmaxClipEps" : 1.0E-10
+          }
         },
-        "lossFunction" : "MSE",
+        "lossFunction" : "MCXENT",
         "momentum" : "NaN",
         "momentumSchedule" : null,
         "nin" : 50,
         "nout" : 2,
         "rho" : "NaN",
         "rmsDecay" : "NaN",
-        "updater" : "ADAM",
+        "updater" : null,
         "weightInit" : "XAVIER"
       }
     },
