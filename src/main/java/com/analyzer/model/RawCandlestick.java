@@ -43,6 +43,28 @@ public class RawCandlestick implements Persistable {
 
     private RawCandlestick() {}
 
+    @Override
+    public RawCandlestick clone() {
+        RawCandlestick rawCandlestick = null;
+        try {
+            rawCandlestick = (RawCandlestick) super.clone();
+        } catch (CloneNotSupportedException e) {
+            rawCandlestick = new RawCandlestick();
+        }
+        rawCandlestick.createdDate = this.createdDate;
+        rawCandlestick.rawCandlestickKey = this.rawCandlestickKey;
+        rawCandlestick.volume = this.volume;
+        rawCandlestick.bidRawCandlestickData = this.bidRawCandlestickData;
+        rawCandlestick.askRawCandlestickData = this.askRawCandlestickData;
+        rawCandlestick.midRawCandlestickData = this.midRawCandlestickData;
+        rawCandlestick.nextDateTime = this.nextDateTime;
+        rawCandlestick.prevDateTime = this.prevDateTime;
+        rawCandlestick.actionStrategies = this.actionStrategies;
+        rawCandlestick.fxIndicators = this.fxIndicators;
+
+        return rawCandlestick;
+    }
+
     public RawCandlestick(Candlestick candlestick,
                           GranularityType granularity,
                           InstrumentValue instrumentValue,

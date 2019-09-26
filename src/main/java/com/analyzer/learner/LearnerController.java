@@ -4,6 +4,7 @@ import com.analyzer.constants.*;
 import com.analyzer.enricher.strategy.StrategyFactory;
 import com.analyzer.learner.stopcondition.StopCondition;
 import com.analyzer.learner.stopcondition.StopConditionFactory;
+import com.analyzer.model.FxIndicator;
 import com.analyzer.model.FxLearnData;
 import com.analyzer.model.RawCandlestick;
 import com.analyzer.model.repository.RawCandlestickRepository;
@@ -41,8 +42,12 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.*;
+
+import static com.analyzer.constants.IndicatorOperation.DIFFERENCE_LATEST_CLOSE_PRICE;
 
 @RestController
 public class LearnerController {
@@ -72,9 +77,9 @@ public class LearnerController {
         if (bindingResult.hasErrors()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        File tmpTrainFile = new File(inputDataPath + "train.csv");
-        File tmpValidateFile = new File(inputDataPath + "validate.csv");
-        File tmpTestFile = new File(inputDataPath + "test.csv");
+        File tmpTrainFile;
+        File tmpValidateFile;
+        File tmpTestFile;
         if (learnerRequestForm.getTrainDataName() == null) {
             tmpTrainFile = new File(inputDataPath + "train_"+new Date().getTime()+".csv");
             tmpValidateFile = new File(inputDataPath + "validate_"+new Date().getTime()+".csv");
@@ -162,6 +167,7 @@ public class LearnerController {
             int batchNumber=learnerRequestForm.getBatchNumber();
             int trainBatchSize=batchNumber > 0 ? batchNumber : trainSize;
             int numInputs = learnerRequestForm.getIndicators().size() * watchInstruments.size() * (1 + learnerRequestForm.getPastValuesNumber());
+
             log.info("batchNumber: "+ batchNumber);
             log.info("trainBatchSize: "+ trainBatchSize);
             log.info("validationSize: "+ validationSize);
@@ -320,6 +326,14 @@ public class LearnerController {
                                 ", granularity: " + granularity);
             }
 
+            // Found out what is the size of indicators that we are going to add
+            List<IndicatorType> differenceWithLatestIndicators = new ArrayList<>();
+            for (IndicatorType indicator : indicators) {
+                if (indicator.operation.isDifferenceWithLatest) {
+                    differenceWithLatestIndicators.add(indicator);
+                }
+            }
+
             Map<InstrumentValue, RawCandlestick> watchRawCandlesticks = new LinkedHashMap<>();
             // We should always watch the instrument we are going to perform action on
             watchRawCandlesticks.put(instrument, mainInstrumentRawCandlestick);
@@ -352,12 +366,12 @@ public class LearnerController {
             // Combine all the data (all the watched instruments + historical data of each of them)
             List<RawCandlestick> allDataToWatch = new ArrayList<>();
             for (LinkedList<RawCandlestick> watchPreviousCandleStick : watchPreviousCandleSticks.values()) {
-                allDataToWatch.addAll(watchPreviousCandleStick);
+                // Add and calculate the indicators that reference to last candlestick
+                allDataToWatch.addAll(adjustDiffWithLatestClose(watchPreviousCandleStick, differenceWithLatestIndicators));
             }
 
             // This is all the data we need to learn how to make a decision in a single instant
             FxLearnData fxLearnData = new FxLearnData(mainInstrumentRawCandlestick, allDataToWatch, strategy, indicators);
-
             fxLearnDataList.add(fxLearnData);
 
             do {
@@ -386,7 +400,8 @@ public class LearnerController {
                         }
 
                         // Combine all the data (all the watched instruments + historical data of each of them)
-                        allDataToWatch.addAll(watchPreviousCandleStick);
+                        // Add and calculate the indicators that reference to last candlestick
+                        allDataToWatch.addAll(adjustDiffWithLatestClose(watchPreviousCandleStick, differenceWithLatestIndicators));
                     }
 
                     // Update also the main instrument that is used for the strategy
@@ -426,23 +441,44 @@ public class LearnerController {
         }
         return size;
     }
+    // Calculate value of indicators that need to be calculated using latest value
+    private List<RawCandlestick> adjustDiffWithLatestClose(LinkedList<RawCandlestick> watchPreviousCandleStick,
+                                           List<IndicatorType> indicators) {
+        Double closePrice = watchPreviousCandleStick.getFirst().getMidRawCandlestickData().getClose();
+        List<RawCandlestick> clonedList = new ArrayList<>();
+        for (RawCandlestick rawCandlestick : watchPreviousCandleStick) {
+            // This one do shallow clone except for indicators
+            RawCandlestick clonedRawCandlestick = rawCandlestick.clone();
+            for (IndicatorType indicator : indicators) {
+                if (indicator.operation == DIFFERENCE_LATEST_CLOSE_PRICE) {
+                    FxIndicator fxIndicator = new FxIndicator(indicator.name(),
+                            new BigDecimal(closePrice - rawCandlestick.getFxIndicator(indicator.operationIndicator.name()).getValue()).setScale(6, RoundingMode.HALF_EVEN).doubleValue());
+                    clonedRawCandlestick.addIndicator(fxIndicator);
+                }
+            }
+            clonedList.add(clonedRawCandlestick);
+        }
+        return clonedList;
+    }
 
     private LinkedList<RawCandlestick> getPreviousCandleSticks(
-            RawCandlestick startCandlestick,
+            RawCandlestick firstCandlestick,
             GranularityType granularity,
             InstrumentValue instrument, int pastValuesNumber) throws Exception {
         LinkedList<RawCandlestick> prevRawCandlesticks = new LinkedList<>();
-        prevRawCandlesticks.addFirst(startCandlestick);
+        prevRawCandlesticks.addFirst(firstCandlestick);
+        RawCandlestick prevCandlestick = firstCandlestick;
         while (pastValuesNumber > 0) {
-            if (startCandlestick.getPrevDateTime() == null) {
+            if (prevCandlestick.getPrevDateTime() == null) {
                 throw new Exception("This candle has missing previous: "
-                        + startCandlestick.getRawCandlestickKey().getDateTime().toString());
+                        + prevCandlestick.getRawCandlestickKey().getDateTime().toString());
             }
-            startCandlestick = rawCandlestickRepository.findOne(
-                    startCandlestick.getPrevDateTime(),
+            prevCandlestick = rawCandlestickRepository.findOne(
+                    prevCandlestick.getPrevDateTime(),
                     granularity,
                     instrument);
-            prevRawCandlesticks.addLast(startCandlestick);
+
+            prevRawCandlesticks.addLast(prevCandlestick);
             pastValuesNumber --;
 
         }

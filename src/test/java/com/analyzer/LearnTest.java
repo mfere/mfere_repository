@@ -111,15 +111,15 @@ public class LearnTest extends ApplicationTest {
         form.setGranularity(GranularityType.H1.name());
         form.setInstrument(InstrumentValue.EUR_USD.name());
         form.setStrategy(StrategyType.BS_TAKE_PROFIT_001_120.name());
-        form.setStopCondition(StopConditionType.BEST_VALIDATION_SCORE_LAST_100.name());
+        form.setStopCondition(StopConditionType.BEST_VALIDATION_SCORE_LAST_300.name());
         form.setIndicators(getRelativeIndicators());
-        form.setPastValuesNumber(24);
+        form.setPastValuesNumber(12);
         form.setShuffleData(true);
         form.setBatchNumber(100);
         form.setLearningRate(0.01);
         form.setNormalizer(NormalizerType.MIN_MAX.name());
         form.setNetworkConfiguration(readNetworkConfiguration(NETWORK_NAME));
-        form.setTrainDataName("h1_5_i");
+        form.setTrainDataName("all_sma_latest_diff");
         return form;
     }
 

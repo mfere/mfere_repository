@@ -23,6 +23,7 @@ public class StopConditionFactory {
             case BEST_VALIDATION_SCORE_LAST_5: return new BestScore(1, 5, model,validationIterator, numOutput);
             case BEST_VALIDATION_SCORE_LAST_10: return new BestScore(1, 10, model,validationIterator, numOutput);
             case BEST_VALIDATION_SCORE_LAST_100: return new BestScore(10, 10, model,validationIterator, numOutput);
+            case BEST_VALIDATION_SCORE_LAST_300: return new BestScore(10, 30, model,validationIterator, numOutput);
             case BEST_VALIDATION_SCORE_LAST_1000: return new BestScore(100, 10, model,validationIterator, numOutput);
             case BEST_VALIDATION_SCORE_LAST_10000: return new BestScore(100, 100, model, validationIterator, numOutput);
             case BEST_VALIDATION_SCORE_LAST_30000: return new BestScore(100, 300, model, validationIterator, numOutput);
